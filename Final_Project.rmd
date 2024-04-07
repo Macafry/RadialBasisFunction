@@ -1,0 +1,17 @@
+---
+title: "MATH 3190 Final Project"
+author: "Jun Hanvey, Ian McFarlane, Kellen Nankervis"
+date: "Due April 25, 2024"
+output: pdf_document
+header-includes:
+   - \usepackage{multirow}
+editor_options: 
+  chunk_output_type: console
+urlcolor: blue
+---
+
+Hello World!
+
+```{r}
+print('Hello world!')
+```
