@@ -13,5 +13,115 @@ urlcolor: blue
 Hello World!
 
 ```{r}
-print('Hello world!')
+print("Hello world!")
+```
+
+
+#TODO: Find good value for n and fix colors so they are the same as the later plot. - Kellen Nankervis
+Create example data to test RBF kernel function
+```{r}
+set.seed(123)
+n <- 1000
+for (i in 1:10) {
+  r <- runif(n, 1, 6 * pi + 1)
+  theta <- runif(n, 0, 2 * pi)
+}
+# Make a sample classification n observations long
+class <- sample(c(0, 1), n, replace = TRUE)
+# Now fill the classification vector with the correct values
+for (j in 1:n) {
+  if ((r[j] + theta[j]) %% (2 * pi) < pi) {
+    class[j] <- 1
+  } else {
+    class[j] <- 0
+  }
+}
+
+# Create a data frame with the data
+data <- data.frame(r, theta, class)
+# Create a scatter plot of the data in x and y coordinates
+data$color <- ifelse(data$class == 1, "red", "blue")
+data$x <- data$r * cos(data$theta)
+data$y <- data$r * sin(data$theta)
+```
+
+
+#TODO: Decide which plots to show and which to delete. Commented out ones would be my current suggestions to delete or at least move to later in the document. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
+```{r}
+# Plot the data in the x and y coordinates
+plot(data$x, data$y, col = data$color, pch = 19, xlab = "x", ylab = "y")
+
+# Plot the data in polar coordinates
+# plot(data$r, data$theta, col = data$color, pch = 19, xlab = "r", ylab = "theta")
+
+# Plot r*theta vs. r^2 * theta^2
+# plot(data$r + data$theta, data$r * data$theta, col = data$color, pch = 19, xlab = "r*theta", ylab = "r^2 * theta^2")
+```
+
+
+#TODO: Decide on good cost to not overfit. Could be a good spot to also show how we can use cross-validation to find the best cost. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
+```{r}
+# Load the required svm library
+library(e1071)
+library(caret)
+
+# Convert class to a factor
+data$class <- as.factor(data$class)
+
+# Create a data frame with only the class and the x and y coordinates
+data2 <- data.frame(class = data$class, x = data$x, y = data$y)
+data2$class <- as.factor(data2$class)
+
+# Use a radial basis function kernel to classify the data with the SVM function
+svmfit <- svm(class ~ ., data = data2, kernel = "radial", cost = 100000, gamma = 1)
+
+print(svmfit)
+
+# Plot the data points
+plot(data2$x, data2$y, col = data2$class, pch = 19, xlab = "x", ylab = "y")
+
+# Plot the decision boundary
+# plot(svmfit, data2$class, grid = 100, dataSymbol = 16)
+x1_grid <- seq(min(data2$x), max(data2$x), length.out = 100)
+x2_grid <- seq(min(data2$y), max(data2$y), length.out = 100)
+grid <- expand.grid(x = x1_grid, y = x2_grid)
+
+predicted_labels <- predict(svmfit, newdata = grid)
+
+plot(data2$x, data2$y, col = data2$class, pch = 19, xlab = "x", ylab = "y")
+points(grid$x, grid$y, col = factor(predicted_labels), pch = ".", cex = 2.5)
+legend("topright", legend = levels(data2$class), col = c("blue", "red"), pch = 19)
+
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit, data2), data2$class)
+```
+
+
+#This was some example code I found to make the decision boundary plot. I'm leaving it for others to see but it will be removed in the final version obviously. - Kellen Nankervis
+```{r}
+print("")
+
+# Create a toy dataset
+set.seed(123)
+data <- data.frame(
+  x1 = rnorm(50, mean = 2),
+  x2 = rnorm(50, mean = 2),
+  label = c(rep("Red", 25), rep("Blue", 25)) |> as.factor()
+)
+
+# Train an SVM
+svm_model <- svm(label ~ ., data = data, kernel = "radial")
+
+# Create a grid of points for prediction
+x1_grid <- seq(min(data$x1), max(data$x1), length.out = 100)
+x2_grid <- seq(min(data$x2), max(data$x2), length.out = 100)
+grid <- expand.grid(x1 = x1_grid, x2 = x2_grid)
+
+# Predict class labels for the grid
+predicted_labels <- predict(svm_model, newdata = grid)
+
+# Plot the decision boundary
+plot(data$x1, data$x2, col = factor(data$label), pch = 19, main = "SVM Decision Boundary")
+points(grid$x1, grid$x2, col = factor(predicted_labels), pch = ".", cex = 2.5)
+legend("topright", legend = levels(data$label), col = c("blue", "red"), pch = 19)
 ```
