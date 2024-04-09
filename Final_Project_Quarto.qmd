@@ -1,20 +1,21 @@
 ---
-title: "MATH 3190 Final Project"
+title: "MATH 3190 Final Project - Quarto"
 author: "Jun Hanvey, Ian McFarlane, Kellen Nankervis"
 date: "Due April 25, 2024"
-output: pdf_document
-header-includes:
-   - \usepackage{multirow}
+jupyter: python3
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
 editor_options: 
   chunk_output_type: console
 urlcolor: blue
+self-contained: true
+self-contained-math: true
 ---
 
 Hello World!
-
-```{r}
-print("Hello world!")
-```
 
 
 #TODO: Find good value for n and fix colors so they are the same as the later plot. - Kellen Nankervis
@@ -136,4 +137,135 @@ predicted_labels <- predict(svm_model, newdata = grid)
 plot(data$x1, data$x2, col = factor(data$label), pch = 19, main = "SVM Decision Boundary")
 points(grid$x1, grid$x2, col = factor(predicted_labels), pch = ".", cex = 2.5)
 legend("topright", legend = levels(data$label), col = c("blue", "red"), pch = 19)
+```
+
+
+# Create a Python script to generate the data and plot it.
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+np.random.seed(123)
+n = 500  # Assuming n is defined
+
+# Collect data in lists
+r_values = []
+theta_values = []
+class_values = []
+
+for i in range(n):
+    r = np.random.uniform(1, 6 * np.pi + 1)
+    theta = np.random.uniform(0, 2 * np.pi)
+    if (r + theta) % (2 * np.pi) < np.pi:
+        class_ = 1
+    else:
+        class_ = 0
+    r_values.append(r)
+    theta_values.append(theta)
+    class_values.append(class_)
+
+# Create DataFrame from lists
+data = pd.DataFrame({"r": r_values, "theta": theta_values, "class": class_values})
+# Add colors to the data
+data["color"] = np.where(data["class"] == 1, "red", "blue")
+data["x"] = data["r"] * np.cos(data["theta"])
+data["y"] = data["r"] * np.sin(data["theta"])
+
+# Offset the data a bit so there is some overlap
+for i in range(n):
+    r = np.random.uniform(0, 0)
+    theta = np.random.uniform(0, 2 * np.pi)
+    data.at[i, "x"] += r * np.cos(theta)
+    data.at[i, "y"] += r * np.sin(theta)
+    data.at[i, "r"] = np.sqrt(data.at[i, "x"] ** 2 + data.at[i, "y"] ** 2)
+    data.at[i, "theta"] = np.arctan2(data.at[i, "y"], data.at[i, "x"])
+```
+
+```{python}
+# Plot the data in the x and y coordinates
+plt.scatter(data["x"], data["y"], c=data["color"])
+plt.xlabel("x")
+plt.ylabel("y")
+plt.show()
+```
+
+```{python}
+# Now it's time to use scikit learn to classify the data with the SVM function
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+
+# Create a data frame with only the class and the x and y coordinates
+data2 = data[["class", "x", "y"]]
+data2["class"] = data2["class"].astype("category")
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(data2[["x", "y"]], data2["class"], test_size=0.2)
+
+# Use a radial basis function kernel to classify the data with the SVM function
+svm = SVC(kernel="rbf", C=1000, gamma=1)
+svm.fit(X_train, y_train)
+```
+
+```{python}
+from sklearn.inspection import DecisionBoundaryDisplay
+from sklearn import svm
+
+
+def plot_training_data_with_decision_boundary(kernel, X, y, gamma=2, C=1, edgeincrease=1, figsize=(16, 9)):
+    # Train the SVC
+    clf = svm.SVC(kernel="rbf", gamma=gamma, C=C).fit(X, y)
+
+    # Settings for plotting
+    _, ax = plt.subplots(figsize=figsize)
+    x_min, x_max, y_min, y_max = min(X[:, 0])-edgeincrease, max(X[:, 0])+edgeincrease, min(X[:, 1])-edgeincrease, max(X[:, 1])+edgeincrease
+    ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
+
+    # Plot decision boundary and margins
+    common_params = {"estimator": clf, "X": X, "ax": ax}
+    DecisionBoundaryDisplay.from_estimator(
+        **common_params,
+        response_method="predict",
+        plot_method="pcolormesh",
+        alpha=0.3,
+    )
+    DecisionBoundaryDisplay.from_estimator(
+        **common_params,
+        response_method="decision_function",
+        plot_method="contour",
+        levels=[-1, 0, 1],
+        colors=["k", "k", "k"],
+        linestyles=["--", "-", "--"],
+    )
+
+    # Plot bigger circles around samples that serve as support vectors
+    ax.scatter(
+        clf.support_vectors_[:, 0],
+        clf.support_vectors_[:, 1],
+        s=250,
+        facecolors="none",
+        edgecolors="k",
+    )
+    # Plot samples by color and add legend
+    ax.scatter(X[:, 0], X[:, 1], c=y, s=150, edgecolors="k")
+    ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
+    ax.set_title(f" Decision boundaries of {kernel} kernel in SVC")
+
+    _ = plt.show()
+```
+
+```{python}
+# Turn the X and Y data into a numpy array
+X = np.array(data2[["x", "y"]])
+y = np.array(data2["class"])
+
+# Plotting settings
+fig, ax = plt.subplots(figsize=(16, 16))
+scatter = ax.scatter(X[:, 0], X[:, 1], c=y, s=150, edgecolors="k")
+x_min, x_max, y_min, y_max = min(X[:, 0])-1, max(X[:, 0])+1, min(X[:, 1])-1, max(X[:, 1])+1
+ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
+
+# Plot decision boundary and margins
+plot_training_data_with_decision_boundary("rbf", X, y, gamma=1, C=1000, edgeincrease=1, figsize=(16, 16))
 ```
