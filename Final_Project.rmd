@@ -2,9 +2,27 @@
 title: "MATH 3190 Final Project"
 author: "Jun Hanvey, Ian McFarlane, Kellen Nankervis"
 date: "Due April 25, 2024"
-output: pdf_document
+output: 
+ #beamer_presentation:
+ #  theme: CambridgeUS
+ pdf_document:
 header-includes:
-   - \usepackage{multirow}
+  - \usepackage{amsmath}
+  - \usepackage{algorithm}
+  - \newcommand{\Ab}{{\mathbf A}}
+  - \newcommand{\Xb}{{\mathbf X}}
+  - \newcommand{\xb}{\boldsymbol{x}}
+  - \newcommand{\yb}{\boldsymbol{y}}
+  - \newcommand{\bb}{\boldsymbol{b}}
+  - \newcommand{\R}{\mathbb{R}}
+  - \newcommand{\rb}{\boldsymbol{r}}
+  - \newcommand{\ub}{\boldsymbol{u}}
+  - \newcommand{\vb}{\boldsymbol{v}}
+  - \newcommand{\pb}{\boldsymbol{p}}
+  - \newcommand{\Ib}{{\mathbf I}}
+  - \makeatletter
+  - \preto{\@verbatim}{\topsep=-10pt \partopsep=4pt }
+  - \makeatother
 editor_options: 
   chunk_output_type: console
 urlcolor: blue
@@ -15,6 +33,175 @@ Hello World!
 ```{r}
 print("Hello world!")
 ```
+
+## Introduction
+
+- TODO
+
+
+## Dual Problem
+For the Support Vector Machine algorithm, our goal is to find a $\beta$ and $c$ under the following optimization objective:
+\begin{align*}
+\underset{\boldsymbol{\beta}, c}{\text{minimize }} & \Vert\boldsymbol{\beta}\Vert^2_2\\
+\text{subject to } & y_i(\boldsymbol{\beta} \cdot\xb_i-c)\ge 1 \text{ for all } i
+\end{align*}
+
+For convenience, let's divide our objective function by 2, which doesn't affect the results:
+
+\begin{align*}
+\underset{\boldsymbol{\beta}, c}{\text{minimize }} & \dfrac{1}{2}\Vert\boldsymbol{\beta}\Vert^2_2\\
+\text{subject to } & y_i(\boldsymbol{\beta} \cdot\xb_i-c)\ge 1 \text{ for all } i
+\end{align*}
+
+Then we can find the [dual optimization problem](https://www.youtube.com/watch?v=uh1Dk68cfWs), using Lagrange Multipliers:
+
+\begin{align*}
+\underset{\boldsymbol{\lambda}}{\text{maximize }}\underset{\boldsymbol{\beta}, c}{\text{minimize }} 
+L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) = \dfrac{1}{2}\Vert\boldsymbol{\beta}\Vert^2_2 - \sum_{i=1}^n \lambda_i \Big( y_i(\boldsymbol{\beta} \cdot\xb_i-c) - 1 \Big) 
+\end{align*}
+
+The dual problem will be satisfied when all partial derivatives are zero, Which leads us to the following results:
+
+\begin{align*}
+\dfrac{\partial{L}}{\partial{\boldsymbol{\beta}}} & 
+= \boldsymbol{\beta} - \sum_{i=1}^n \lambda_i y_i \xb_i \overset{\text{set}}{=} 0 \iff
+\boldsymbol{\beta} = \sum_{i=1}^n \lambda_i y_i \xb_i \\
+\dfrac{\partial{L}}{\partial{\boldsymbol{\lambda}}} & = \sum_{i=1}^n y_i(\boldsymbol{\beta} \cdot\xb_i-c) - 1 \overset{\text{set}}{=} 0 \iff c = 
+\dfrac{\sum_{i=1}^n y_i \boldsymbol{\beta} \cdot\xb_i-n}{\sum_{i=1}^n y_i} \\
+\dfrac{\partial{L}}{\partial{c}} & = \sum_{i=1}^n \lambda_i y_i \overset{\text{set}}{=} 0 \iff \boldsymbol{\lambda} \cdot \boldsymbol{y} = 0
+\end{align*}
+
+Observe how $\boldsymbol{\beta}$ and $c$ can be derived from $\boldsymbol{\lambda}$, $\boldsymbol{y}$ and $X$. Substituting these results into the Lagrangian should lead to some nice results. Although, substituting for $c$ won't be necessary (it gets multiplied by zero). Then, replacing $\boldsymbol{\beta}$ in our Lagrangian yields:
+
+
+\begin{align*}
+L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) &= \dfrac{1}{2}\Vert\boldsymbol{\beta}\Vert^2_2 - \sum_{i=1}^n \lambda_i \Big( y_i(\boldsymbol{\beta} \cdot\xb_i-c) - 1 \Big)  \\
+&= \dfrac{1}{2}\Vert\boldsymbol{\beta}\Vert^2_2 - \sum_{i=1}^n \lambda_i y_i\boldsymbol{\beta} \cdot\xb_i + c \sum_{i=1}^n \lambda_iy_i + \sum_{i=1}^n \lambda_i \\
+&= \dfrac{1}{2}\Vert\sum_{j=1}^n \lambda_j y_j \xb_j\Vert^2_2  
+- \sum_{i=1}^n \left( \sum_{j=1}^n \lambda_j y_j \xb_j\right) \cdot\Big(\lambda_i y_i\xb_i \Big) 
++ c \cdot 0 + \sum_{i=1}^n \lambda_i \\
+&= \dfrac{1}{2} \left( \sum_{i=1}^n \lambda_i y_i \xb_i\right) \cdot \left( \sum_{j=1}^n \lambda_j y_j \xb_j\right) 
+- \sum_{i=1}^n  \sum_{j=1}^n \left(\lambda_j y_j \xb_j\right) \cdot\left(\lambda_i y_i\xb_i\right) + \sum_{i=1}^n \lambda_i\\
+&= \dfrac{1}{2} \sum_{i=1}^n \sum_{j=1}^n (\lambda_i y_i \xb_i) \cdot(\lambda_j y_j \xb_j) - \sum_{i=1}^n \sum_{j=1}^n (\lambda_i y_i \xb_i) \cdot(\lambda_j y_j \xb_j) +  \sum_{i=1}^n \lambda_i\\
+&= -\dfrac{1}{2}\sum_{i=1}^n \sum_{j=1}^n \lambda_i\lambda_jy_iy_j\xb_i \cdot\xb_j + \sum_{i=1}^n\lambda_i\\
+L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) &= \sum_{i=1}^n\lambda_i-\dfrac{1}{2}\sum_{i=1}^n \sum_{j=1}^n \lambda_i\lambda_jy_iy_j\xb_i \cdot\xb_j
+\end{align*}
+
+
+This shows a version of the Lagrangian that doesn't depend on $\boldsymbol{\beta}$ nor $c$, which means the optimization problem reduces to:
+
+\begin{align*}
+\underset{\boldsymbol{\lambda}}{\text{maximize }}L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) &= \sum_{i=1}^n\lambda_i-\dfrac{1}{2}\sum_{i=1}^n \sum_{j=1}^n \lambda_i\lambda_jy_iy_j\xb_i \cdot\xb_j 
+\end{align*}
+
+## Kernel Trick
+
+But, why did we go through all that trouble? In this form, we can observe that the Lagrangian depends  on 3 components only:
+
+- $\lambda_i$, an optimization artifact 
+- $y_i$, a fixed "binary" variable 
+- $\xb_i$, the features we're using to predict the class
+
+
+Notice, $\xb_i$ is the only aspect of our model we can modify (via feature engineering). So, let $\phi(\xb)$ be our feature engineer transformation, then our Lagrangian becomes:
+\begin{align*}
+L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) &= \sum_{i=1}^n\lambda_i -\dfrac{1}{2}\sum_{i=1}^n \sum_{j=1}^n \lambda_i\lambda_jy_iy_j\phi(\xb_i) \cdot\phi(\xb_j) 
+\end{align*}
+
+From this we can observe that we don't really need to calculate $\phi(\xb)$, a function that finds $\phi(\xb_i) \cdot\phi(\xb_j)$ from $\xb_i$ and $\xb_j$ is good enough. We call that function a Kernel and denote it by $K(\xb_i, \xb_j)$. To avoid having complicated sub-indices, we'll relabel the arguments of $K$ to $\boldsymbol{a}$ and $\boldsymbol{b}$, so we'll have $K(\boldsymbol{a}, \boldsymbol{b})$. Finding the $\phi(\boldsymbol{a}) \cdot\phi(\boldsymbol{b})$, without having to calculate $\phi$  is what we call the **Kernel Trick**.
+
+![](figs/kernel_trick2.png)
+
+One of the simplest transformations we can investigate is $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$
+
+If we expand the dot product, we get: 
+
+$K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (a_1b_1 + a_2b_2 + \cdots + a_nb_n)^2$
+
+Expanding the square, gives:
+\begin{align*}
+K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = & (a_1b_1)(a_1b_1) + (a_1b_1)(a_2b_2) + \cdots + (a_1b_1)(a_nb_n) + \\
+& (a_2b_2)(a_1b_1) + (a_2b_2)(a_2b_2) + \cdots + (a_2b_2)(a_nb_n) + \\
+& \hspace{1in} \vdots\\
+& (a_nb_n)(a_1b_1) + (a_nb_n)(a_2b_2) + \cdots + (a_nb_n)(a_nb_n)\\\\
+= & (a_1a_1)(b_1b_1) + (a_1a_2)(b_1b_2) + \cdots + (a_1a_n)(b_1b_n) + \\
+& (a_2a_1)(b_2b_1) + (a_2a_2)(b_2b_2) + \cdots + (a_2a_n)(b_2b_n) + \\
+& \hspace{1in} \vdots\\
+& (a_na_1)(b_nb_1) + (a_na_2)(b_nb_2) + \cdots + (a_na_n)(b_nb_n)
+\end{align*}
+
+Observe that the expanded sum is equivalent to the dot product of the vectors containing all pair-wise interaction terms. So, in this case 
+
+$$\phi_{Power(2)}(\boldsymbol{x}) = 
+\begin{bmatrix}
+x_1x_1 \\
+x_1x_2 \\
+\vdots \\ 
+x_1x_n \\ 
+x_2x_1 \\
+x_2x_2 \\
+\vdots \\ 
+x_2x_n \\ 
+\vdots \\
+x_nx_1 \\
+x_nx_2 \\
+\vdots \\
+x_nx_n
+\end{bmatrix}
+$$
+
+and $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = \phi_{Power(2)}(\boldsymbol{a}) \cdot \phi_{Power(2)}(\boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$. However, notice we don't have to compute $\phi_{Power(2)}$ if we take $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$ instead.
+
+Likewise, one can show that: 
+\begin{align*}
+K_{Power(3)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^3 \text{ corresponds to the transformation containing all 3-way interaction terms}\\
+K_{Power(4)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^4 \text{ corresponds to the transformation containing all 4-way interaction terms}\\
+&\hspace{1in}\vdots\\
+K_{Power(n)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^n \text{ corresponds to the transformation containing all n-way interaction terms}
+\end{align*}
+
+However, in Applied Statistics we learned that whenever we include high order terms, we also want to include all lower level terms. So, let's inspect the following kernel:
+
+$K_{Poly(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^2 = \underset{\text{2-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^2} + \underset{\text{1-way}}{2(\boldsymbol{a} \cdot \boldsymbol{b})} + \underset{\text{0-way}}{1}$ 
+
+So, $K_{Poly(2)}$ gives us the 2-way interaction terms and all the lower order terms. Likewise,  $K_{Poly(n)}= (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^n$ gives us the n-way interaction terms and below, precisely what we wanted. This is also the polynomial kernel for SVM with $\gamma$ = 1.
+
+This proposes an interesting conundrum: which n should we pick? We could try using using cross-validation. However, our friend ***Taylor*** might have a way of trying out all n values at the same time, while giving more weight to lower order terms than the higher order terms (following the principle of parsimony).
+
+Recall:
+
+$\operatorname{exp}(x) = 1 + \dfrac{1}{1!}x^1 + \dfrac{1}{2!}x^2 + \dfrac{1}{3!}x^3 + \dfrac{1}{4!}x^4 + \cdots$
+
+
+Then by plugging $\boldsymbol{a} \cdot \boldsymbol{b}$ for $x$, we get:
+
+$\operatorname{exp}(\boldsymbol{a} \cdot \boldsymbol{b}) = \underset{\text{0-way}}{1} + 
+\dfrac{1}{1!}\underset{\text{1-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^1} + 
+\dfrac{1}{2!}\underset{\text{2-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^2} + 
+\dfrac{1}{3!}\underset{\text{3-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^3} + 
+\dfrac{1}{4!}\underset{\text{4-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^4} + \cdots$
+
+Which gives us ALL n-way interaction terms, weighing the lower terms more and the higher terms less. This also means we're essentially computing the dot product of an infinite-dimensional transformation, without having to compute infinite transformations. However, to get to the Radial Basis Function, we need a couple transformations:
+
+First, let's multiply it by $\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right)$:
+
+\begin{align*}
+\operatorname{exp}\Big(\boldsymbol{a} \cdot \boldsymbol{b}\Big)\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right) &= 
+\operatorname{exp}\left(\boldsymbol{a} \cdot \boldsymbol{b}-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right)\\
+&= \operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2- 2 \boldsymbol{a} \cdot \boldsymbol{b}}{2}\right)\\
+&= \operatorname{exp}\left(-\dfrac{1}{2}\Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\right)
+\end{align*}
+
+Now, let's raise it to the $2\gamma$ to add a control parameter.
+
+$\left(\operatorname{exp}\left(-\dfrac{1}{2}\Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\right)\right)^{2\gamma} = \operatorname{exp}\Big(-\gamma \Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\Big)$
+
+
+Finally, after 4 pages, we have arrived to the Radial Basis Function Kernel:
+
+$K_{RBF}(\boldsymbol{a}, \boldsymbol{b}) = \operatorname{exp}\Big(-\gamma \Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\Big)$
+
+In essence RBF is so special because it performs the optimization over an infinite-dimensional feature space. All that with a really simple formula, which allows for very intricate decision boundaries with minimal computational power.
 
 
 #TODO: Find good value for n and fix colors so they are the same as the later plot. - Kellen Nankervis
