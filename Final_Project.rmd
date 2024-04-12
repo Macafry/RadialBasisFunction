@@ -204,8 +204,12 @@ $K_{RBF}(\boldsymbol{a}, \boldsymbol{b}) = \operatorname{exp}\Big(-\gamma \Vert\
 In essence RBF is so special because it performs the optimization over an infinite-dimensional feature space. All that with a really simple formula, which allows for very intricate decision boundaries with minimal computational power.
 
 
-#TODO: Find good value for n and fix colors so they are the same as the later plot. - Kellen Nankervis
-Create example data to test RBF kernel function
+## Example Data
+- TODO: Find good value for n and fix colors so they are the same as the later plot. - Kellen Nankervis
+To show the power of the Radial Basis Function we will first use a generated data set.
+
+First we will generate the data. For this example I am creating a sort of spiral pattern using 1000 data points. I'm using this pattern because it is a case where a linear kernel would not work well. The data is generated in polar coordinates and then converted to x and y coordinates. The data is then offset a bit so there is some overlap between the two classes.
+
 ```{r}
 set.seed(123)
 n <- 1000
@@ -231,9 +235,9 @@ data$color <- ifelse(data$class == 1, "red", "blue")
 data$x <- data$r * cos(data$theta)
 data$y <- data$r * sin(data$theta)
 
-# Now offset the data a bit so their is some overlap
+# Now offset the data a bit so there is some overlap
 for (j in 1:n) {
-  r <- runif(1, 0, 1)
+  r <- runif(1, 0, 2)
   theta <- runif(1, 0, 2 * pi)
   # Convert to x and y coordinates
   data$x[j] <- data$x[j] + r * cos(theta)
@@ -243,9 +247,10 @@ for (j in 1:n) {
   data$theta[j] <- atan2(data$y[j], data$x[j])
 }
 ```
+- TODO: Decide which plots to show and which to delete. Commented out ones would be my current suggestions to delete or at least move to later in the document. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 
+Now lets take a look at this generated data.
 
-#TODO: Decide which plots to show and which to delete. Commented out ones would be my current suggestions to delete or at least move to later in the document. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 ```{r}
 # Plot the data in the x and y coordinates
 plot(data$x, data$y, col = data$color, pch = 19, xlab = "x", ylab = "y")
@@ -257,8 +262,12 @@ plot(data$x, data$y, col = data$color, pch = 19, xlab = "x", ylab = "y")
 # plot(data$r + data$theta, data$r * data$theta, col = data$color, pch = 19, xlab = "r*theta", ylab = "r^2 * theta^2")
 ```
 
+As we can see it matches a spiral pattern with a bit of overlap between the two classes. Since we know how the data was genreated it might be smart to convert to polar coordinates, but if this data weren't generated we might not make that connection. This is where the RBF kernel can be very useful.
 
-#TODO: Decide on good cost to not overfit. Could be a good spot to also show how we can use cross-validation to find the best cost. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
+- TODO: Decide on good cost to not over fit. Could be a good spot to also show how we can use cross-validation to find the best cost. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
+
+Now lets use the RBF kernel to classify this data. Right now we will use a cost of 10 and a gamma of 10, but later we can use cross-validation to find the best values for these parameters.
+
 ```{r}
 # Load the required svm library
 library(e1071)
@@ -272,31 +281,64 @@ data2 <- data.frame(class = data$class, x = data$x, y = data$y)
 data2$class <- as.factor(data2$class)
 
 # Use a radial basis function kernel to classify the data with the SVM function
-svmfit <- svm(class ~ ., data = data2, kernel = "radial", cost = 1000, gamma = 1)
+svmfit <- svm(class ~ ., data = data2, kernel = "radial", cost = 10, gamma = 10)
 
 print(svmfit)
 
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit, data2), data2$class)
+```
+
+From the confusion matrix we can see that the model is doing a descent job at classifying the data, with an accuracy of 85.5%. Now let's look at the decision boundary to see how it is classifying the data.
+
+```{r}
+# Define colors for data points
+point_colors <- c("blue", "red")
+
+# Define colors for decision boundary
+boundary_colors <- c("skyblue", "orange")
+
 # Plot the data points
-plot(data2$x, data2$y, col = data2$class, pch = 19, xlab = "x", ylab = "y")
+plot(data2$x, data2$y, col = point_colors[data2$class], pch = 19, xlab = "x", ylab = "y")
 
 # Plot the decision boundary
-# plot(svmfit, data2$class, grid = 100, dataSymbol = 16)
 x1_grid <- seq(min(data2$x), max(data2$x), length.out = 100)
 x2_grid <- seq(min(data2$y), max(data2$y), length.out = 100)
 grid <- expand.grid(x = x1_grid, y = x2_grid)
 
 predicted_labels <- predict(svmfit, newdata = grid)
 
-plot(data2$x, data2$y, col = data2$class, pch = 19, xlab = "x", ylab = "y")
-points(grid$x, grid$y, col = factor(predicted_labels), pch = ".", cex = 3.5)
-legend("topright", legend = levels(data2$class), col = c("blue", "red"), pch = 19)
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 
-# Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit, data2), data2$class)
+# Plot the data points
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
+legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
 
+- If we want to plot the decision boundary above the points we can use the following code. - Kellen Nankervis
+```{r}
+# Plot the data points
+plot(data2$x, data2$y, col = point_colors[data2$class], pch = 19, xlab = "x", ylab = "y")
 
-#This was some example code I found to make the decision boundary plot. I'm leaving it for others to see but it will be removed in the final version obviously. - Kellen Nankervis
+# Plot the decision boundary
+points(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5)
+legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
+```
+
+- Or to just plot the decision boundary we can use the following code. - Kellen Nankervis
+```{r}
+# Plot the decision boundary
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
+```
+
+We can see that the decision boundary is doing a good job at classifying the data. The boundary isn't quite perfect, since it doesn't maintain the same width throughout the spiral, and it also has some gaps, but overall it is doing a good job at classifying the data and finding the spiral pattern used to generate it in this example.
+
+- TODO: Use cross validation to find the best cost and gamma values. - Kellen Nankervis
+
+- Compare to a linear kernel and a logistic regression model without many interactions. - Kellen Nankervis
+
+- Example of how to plot I found online. Should be removed for final paper but I thought it might be helpful to look at. - Kellen Nankervis
 ```{r}
 print("")
 
