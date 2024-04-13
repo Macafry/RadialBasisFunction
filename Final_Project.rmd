@@ -211,41 +211,49 @@ To show the power of the Radial Basis Function we will first use a generated dat
 First we will generate the data. For this example I am creating a sort of spiral pattern using 1000 data points. I'm using this pattern because it is a case where a linear kernel would not work well. The data is generated in polar coordinates and then converted to x and y coordinates. The data is then offset a bit so there is some overlap between the two classes.
 
 ```{r}
-set.seed(123)
 n <- 1000
-for (i in 1:10) {
+r <- 6 * pi + 1
+r_offset <- 2
+colors <- c("blue", "red")
+
+generate_spiral <- function(n, r, r_offset, colors, seed) {
+  set.seed(seed)
+
+  # Generate random values for r and theta
   r <- runif(n, 1, 6 * pi + 1)
   theta <- runif(n, 0, 2 * pi)
-}
-# Make a sample classification n observations long
-class <- sample(c(0, 1), n, replace = TRUE)
-# Now fill the classification vector with the correct values
-for (j in 1:n) {
-  if ((r[j] + theta[j]) %% (2 * pi) < pi) {
-    class[j] <- 1
-  } else {
-    class[j] <- 0
+
+  # Classify observations based on r and theta
+  class <- ifelse((r + theta) %% (2 * pi) < pi, 1, 0)
+
+  # Create a data frame with the data
+  data <- data.frame(r, theta, class)
+
+  # Create colors based on class
+  data$color <- ifelse(data$class == 1, colors[2], colors[1])
+
+  # Convert polar coordinates to Cartesian coordinates
+  data$x <- data$r * cos(data$theta)
+  data$y <- data$r * sin(data$theta)
+
+  # Offset the data
+  for (j in 1:n) {
+    r_offset_val <- runif(1, 0, r_offset)
+    theta_offset_val <- runif(1, 0, 2 * pi)
+
+    # Convert to Cartesian coordinates
+    data$x[j] <- data$x[j] + r_offset_val * cos(theta_offset_val)
+    data$y[j] <- data$y[j] + r_offset_val * sin(theta_offset_val)
+
+    # Convert back to polar coordinates
+    data$r[j] <- sqrt(data$x[j]^2 + data$y[j]^2)
+    data$theta[j] <- atan2(data$y[j], data$x[j])
   }
+
+  return(data)
 }
 
-# Create a data frame with the data
-data <- data.frame(r, theta, class)
-# Create a scatter plot of the data in x and y coordinates
-data$color <- ifelse(data$class == 1, "red", "blue")
-data$x <- data$r * cos(data$theta)
-data$y <- data$r * sin(data$theta)
-
-# Now offset the data a bit so there is some overlap
-for (j in 1:n) {
-  r <- runif(1, 0, 2)
-  theta <- runif(1, 0, 2 * pi)
-  # Convert to x and y coordinates
-  data$x[j] <- data$x[j] + r * cos(theta)
-  data$y[j] <- data$y[j] + r * sin(theta)
-  # Convert the new x and y coordinates back to r and theta
-  data$r[j] <- sqrt(data$x[j]^2 + data$y[j]^2)
-  data$theta[j] <- atan2(data$y[j], data$x[j])
-}
+data <- generate_spiral(n, r, r_offset, colors, seed = 2024)
 ```
 - TODO: Decide which plots to show and which to delete. Commented out ones would be my current suggestions to delete or at least move to later in the document. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 
@@ -266,7 +274,7 @@ As we can see it matches a spiral pattern with a bit of overlap between the two 
 
 - TODO: Decide on good cost to not over fit. Could be a good spot to also show how we can use cross-validation to find the best cost. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 
-Now lets use the RBF kernel to classify this data. Right now we will use a cost of 10 and a gamma of 10, but later we can use cross-validation to find the best values for these parameters.
+Now lets use the RBF kernel to classify this data. Right now we will use a cost of 1 and a gamma of 1, the default values of the function, but later we can use cross-validation to find the best values for these parameters.
 
 ```{r}
 # Load the required svm library
@@ -281,15 +289,14 @@ data2 <- data.frame(class = data$class, x = data$x, y = data$y)
 data2$class <- as.factor(data2$class)
 
 # Use a radial basis function kernel to classify the data with the SVM function
-svmfit <- svm(class ~ ., data = data2, kernel = "radial", cost = 10, gamma = 10)
-
+svmfit <- svm(class ~ ., data = data2, kernel = "radial")
 print(svmfit)
 
 # Create a confusion matrix to evaluate the SVM model
 confusionMatrix(predict(svmfit, data2), data2$class)
 ```
 
-From the confusion matrix we can see that the model is doing a descent job at classifying the data, with an accuracy of 85.5%. Now let's look at the decision boundary to see how it is classifying the data.
+This doesn't look that good as it is hardly better than the trivial approach which would get 51.3% correct compared to the 55.1% of our model. Let's look at the decision boundary to see what it thinks.
 
 ```{r}
 # Define colors for data points
@@ -332,11 +339,67 @@ plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
 
-We can see that the decision boundary is doing a good job at classifying the data. The boundary isn't quite perfect, since it doesn't maintain the same width throughout the spiral, and it also has some gaps, but overall it is doing a good job at classifying the data and finding the spiral pattern used to generate it in this example.
+We can see that the decision boundary is not very good. This is because the default values for cost and gamma are not good for this data. However hope is not lost since we can use cross-validation to find the best values for these parameters. Luckily we can do this with the svm function by setting 'cross' in the svm function to 5. This will use 5-fold cross-validation to find the best values for cost and gamma.
 
-- TODO: Use cross validation to find the best cost and gamma values. - Kellen Nankervis
+```{r}
+# First write a simple cross validation function
+cross_validate <- function(folds, costs, gammas, data, seed) {
+  # Create a data frame to store the results
+  results <- data.frame(cost = numeric(0), gamma = numeric(0), accuracy = numeric(0))
 
-- Compare to a linear kernel and a logistic regression model without many interactions. - Kellen Nankervis
+  # Loop through each cost and gamma value
+  for (cost in costs) {
+    for (gamma in gammas) {
+      # Set seed so the folds should be the same each time
+      set.seed(seed)
+
+      # Use cross-validation to find the best cost and gamma values
+      svm_cross <- svm(class ~ ., data = data, kernel = "radial", cross = folds, cost = cost, gamma = gamma)
+
+      # Store the results
+      results <- rbind(results, data.frame(cost = cost, gamma = gamma, accuracy = svm_cross$tot.accuracy))
+    }
+  }
+
+  return(results)
+}
+
+# Run our function
+validation_data_frame <- cross_validate(5, c(0.1, 1, 10, 100, 1000), c(0.01, 0.1, 1, 10, 100), data2, seed = 2024)
+
+# Print the top 5 best cost and gamma values
+print(validation_data_frame[order(-validation_data_frame$accuracy), ][1:5, ])
+```
+
+From these results we see that a cost of 1 and a gamma of 10 are the best values for this data with an total accuracy of 74.3% on the test folds. Now lets use these values to classify the data and plot the decision boundary.
+
+```{r}
+# Use the best cost and gamma values to classify the data
+svmfit_best <- svm(class ~ ., data = data2, kernel = "radial", cost = 1, gamma = 10)
+
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit_best, data2), data2$class)
+
+predicted_labels_best <- predict(svmfit_best, newdata = grid)
+
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+
+# Plot the data points
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
+legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
+```
+- Or to just plot the decision boundary which I think is my preferred method right now. - Kellen Nankervis
+```{r}
+# Plot the decision boundary
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
+```
+
+Now this looks pretty good with a total accuracy of 82.1% on the entire training set. This is a huge improvement over the 55.1% we got with the default values. The plot also shows that the decision boundary is much better than before. It isn't quite perfect, with some gaps and strange connections occasionally, but it is much closer to the true decision boundary of how the data was classified than before.
+
+- TODO: See how this best model performs on the test data generated earlier. - Kellen Nankervis
+
+- TODO: Compare to a linear kernel, a polynomial kernel, and a logistic regression model without many interactions to show the specific power of the RBF kernel. - Kellen Nankervis
 
 - Example of how to plot I found online. Should be removed for final paper but I thought it might be helpful to look at. - Kellen Nankervis
 ```{r}
