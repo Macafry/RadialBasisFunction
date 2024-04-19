@@ -255,6 +255,7 @@ generate_spiral <- function(n, r, r_offset, colors, seed) {
 
 data <- generate_spiral(n, r, r_offset, colors, seed = 2024)
 ```
+
 - TODO: Decide which plots to show and which to delete. Commented out ones would be my current suggestions to delete or at least move to later in the document. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 
 Now lets take a look at this generated data.
@@ -392,14 +393,68 @@ legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```{r}
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
-legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
+legend("topright", legend = levels(data2$class), col = boundary_colors, pch = 19)
 ```
 
 Now this looks pretty good with a total accuracy of 82.1% on the entire training set. This is a huge improvement over the 55.1% we got with the default values. The plot also shows that the decision boundary is much better than before. It isn't quite perfect, with some gaps and strange connections occasionally, but it is much closer to the true decision boundary of how the data was classified than before.
 
 - TODO: See how this best model performs on the test data generated earlier. - Kellen Nankervis
 
-- TODO: Compare to a linear kernel, a polynomial kernel, and a logistic regression model without many interactions to show the specific power of the RBF kernel. - Kellen Nankervis
+The final step is to see how this model performs on some test data generated the same way. We will use the same confusion matrix function as before to evaluate the model.
+
+```{r}
+# Create new test data
+n <- 1000
+r <- 6 * pi + 1
+r_offset <- 2
+colors <- c("blue", "red")
+test_data <- generate_spiral(n, r, r_offset, colors, seed = 2025)
+
+# Convert class to a factor
+test_data$class <- as.factor(test_data$class)
+
+# Create a data frame with only the class and the x and y coordinates
+test_data2 <- data.frame(class = test_data$class, x = test_data$x, y = test_data$y)
+test_data2$class <- as.factor(test_data2$class)
+
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit_best, test_data2), test_data2$class)
+```
+
+We see we get an accuracy of 75.6% on the test data. This is a bit lower than the 82.1% we got on the training data, but it is actually better than what we got when doing cross validation on the training data likely since we trained on the full data set where in cross validation we only trained on 80% of the data. This shows that the model is generalizing well to new data.
+
+To see what the model accuracy would have been had the model found the true decision boundary before applying the offset we can use the following code.
+
+```{r}
+post_offset_class <- numeric(n)
+new_r <- numeric(n)
+new_theta <- numeric(n)
+
+for (j in 1:n) {
+  new_r[j] <- sqrt(test_data2$x[j]^2 + test_data2$y[j]^2)
+  new_theta[j] <- atan2(test_data2$y[j], test_data2$x[j])
+  
+  ifelse(new_theta[j] < 0, new_theta[j] <- new_theta[j] + 2 * pi, new_theta[j] <- new_theta[j])
+
+  # Classify observations based on r and theta
+  post_offset_class[j] <- ifelse((new_r[j] + new_theta[j]) %% (2 * pi) < pi, 1, 0)
+}
+
+# Add the results to the data frame
+test_data2$post_offset_class <- post_offset_class
+test_data2$new_r <- new_r
+test_data2$new_theta <- new_theta
+
+# Make the post offset class a factor
+test_data2$post_offset_class <- as.factor(test_data2$post_offset_class)
+
+# Now compare the true class to the predicted class given by the true decision boundary
+confusionMatrix(test_data2$post_offset_class, test_data2$class)
+```
+
+We see that due to the offset being applied to the data, even if we re applied the true decision boundary before offsetting the data we would only get an accuracy of 80.7%. This is good since that means our model is only 5.2% off a model that found the true decision boundary before the offset was applied.
+
+- TODO: Compare to a linear kernel, a polynomial kernel, and a logistic regression model without many interactions to show the specific power of the RBF kernel. Also KNN. - Kellen Nankervis
 
 - Example of how to plot I found online. Should be removed for final paper but I thought it might be helpful to look at. - Kellen Nankervis
 ```{r}
