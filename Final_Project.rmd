@@ -205,7 +205,7 @@ In essence RBF is so special because it performs the optimization over an infini
 
 
 ## Example Data
-- TODO: Find good value for n and fix colors so they are the same as the later plot. - Kellen Nankervis
+- TODO: Fix colors so they are the same as the later plot. Add some more surrounding text to the whole example portion. - Kellen Nankervis
 To show the power of the Radial Basis Function we will first use a generated data set.
 
 First we will generate the data. For this example I am creating a sort of spiral pattern using 1000 data points. I'm using this pattern because it is a case where a linear kernel would not work well. The data is generated in polar coordinates and then converted to x and y coordinates. The data is then offset a bit so there is some overlap between the two classes.
@@ -255,6 +255,7 @@ generate_spiral <- function(n, r, r_offset, colors, seed) {
 
 data <- generate_spiral(n, r, r_offset, colors, seed = 2024)
 ```
+
 - TODO: Decide which plots to show and which to delete. Commented out ones would be my current suggestions to delete or at least move to later in the document. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 
 Now lets take a look at this generated data.
@@ -271,8 +272,6 @@ plot(data$x, data$y, col = data$color, pch = 19, xlab = "x", ylab = "y")
 ```
 
 As we can see it matches a spiral pattern with a bit of overlap between the two classes. Since we know how the data was genreated it might be smart to convert to polar coordinates, but if this data weren't generated we might not make that connection. This is where the RBF kernel can be very useful.
-
-- TODO: Decide on good cost to not over fit. Could be a good spot to also show how we can use cross-validation to find the best cost. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 
 Now lets use the RBF kernel to classify this data. Right now we will use a cost of 1 and a gamma of 1, the default values of the function, but later we can use cross-validation to find the best values for these parameters.
 
@@ -392,14 +391,240 @@ legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```{r}
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
-legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
+legend("topright", legend = levels(data2$class), col = boundary_colors, pch = 19)
 ```
 
 Now this looks pretty good with a total accuracy of 82.1% on the entire training set. This is a huge improvement over the 55.1% we got with the default values. The plot also shows that the decision boundary is much better than before. It isn't quite perfect, with some gaps and strange connections occasionally, but it is much closer to the true decision boundary of how the data was classified than before.
 
-- TODO: See how this best model performs on the test data generated earlier. - Kellen Nankervis
+The final step is to see how this model performs on some test data generated the same way. We will use the same confusion matrix function as before to evaluate the model.
 
-- TODO: Compare to a linear kernel, a polynomial kernel, and a logistic regression model without many interactions to show the specific power of the RBF kernel. - Kellen Nankervis
+```{r}
+# Create new test data
+n <- 1000
+r <- 6 * pi + 1
+r_offset <- 2
+colors <- c("blue", "red")
+test_data <- generate_spiral(n, r, r_offset, colors, seed = 2025)
+
+# Convert class to a factor
+test_data$class <- as.factor(test_data$class)
+
+# Create a data frame with only the class and the x and y coordinates
+test_data2 <- data.frame(class = test_data$class, x = test_data$x, y = test_data$y)
+test_data2$class <- as.factor(test_data2$class)
+
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit_best, test_data2), test_data2$class)
+```
+
+We see we get an accuracy of 75.6% on the test data. This is a bit lower than the 82.1% we got on the training data, but it is actually better than what we got when doing cross validation on the training data likely since we trained on the full data set where in cross validation we only trained on 80% of the data. This shows that the model is generalizing well to new data.
+
+To see what the model accuracy would have been had the model found the true decision boundary before applying the offset we can use the following code.
+
+```{r}
+post_offset_class <- numeric(n)
+new_r <- numeric(n)
+new_theta <- numeric(n)
+
+for (j in 1:n) {
+  new_r[j] <- sqrt(test_data2$x[j]^2 + test_data2$y[j]^2)
+  new_theta[j] <- atan2(test_data2$y[j], test_data2$x[j])
+
+  ifelse(new_theta[j] < 0, new_theta[j] <- new_theta[j] + 2 * pi, new_theta[j] <- new_theta[j])
+
+  # Classify observations based on r and theta
+  post_offset_class[j] <- ifelse((new_r[j] + new_theta[j]) %% (2 * pi) < pi, 1, 0)
+}
+
+# Add the results to the data frame
+test_data2$post_offset_class <- post_offset_class
+test_data2$new_r <- new_r
+test_data2$new_theta <- new_theta
+
+# Make the post offset class a factor
+test_data2$post_offset_class <- as.factor(test_data2$post_offset_class)
+
+# Now compare the true class to the predicted class given by the true decision boundary
+confusionMatrix(test_data2$post_offset_class, test_data2$class)
+```
+
+We see that due to the offset being applied to the data, even if we re applied the true decision boundary before offsetting the data we would only get an accuracy of 80.7%. This is good since that means our model is only 5.2% off a model that found the true decision boundary before the offset was applied.
+
+Finally lets plot the true decision boundary and the decision boundary found by the model for comparison.
+
+```{r}
+# Create a grid of points for prediction
+x1_grid <- seq(min(test_data2$x), max(test_data2$x), length.out = 100)
+x2_grid <- seq(min(test_data2$y), max(test_data2$y), length.out = 100)
+
+grid <- expand.grid(x = x1_grid, y = x2_grid)
+
+# Make the grid a data frame of x and y coordinates
+grid_data <- data.frame(x = grid$x, y = grid$y)
+
+for (j in 1:nrow(grid_data)) {
+  new_r <- sqrt(grid_data$x[j]^2 + grid_data$y[j]^2)
+  new_theta <- atan2(grid_data$y[j], grid_data$x[j])
+
+  ifelse(new_theta < 0, new_theta <- new_theta + 2 * pi, new_theta <- new_theta)
+
+  # Classify observations based on r and theta
+  grid_data$class[j] <- ifelse((new_r + new_theta) %% (2 * pi) < pi, 1, 0)
+}
+
+# Plot the true decision boundary
+plot(grid_data$x, grid_data$y, col = grid_data$class, pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+
+# Plot the decision boundary found by the model
+predicted_labels_best <- predict(svmfit_best, newdata = grid)
+
+points(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = "x", cex = .85)
+```
+
+Now that we have seen the power of the RBF kernel we can compare it to other models. We will compare it to a linear kernel, a polynomial kernel, a logistic regression model without many interactions. We will also compare it to a KNN model. 
+
+Lets start with a linear kernel and a polynomial kernel since those are fairly easy.
+
+```{r}
+# Use a linear kernel to classify the data with the SVM function
+svmfit_linear <- svm(class ~ ., data = data2, kernel = "linear", cost = 1000)
+
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit_linear, data2), data2$class)
+
+predicted_labels_linear <- predict(svmfit_linear, newdata = grid)
+
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+```
+
+As we can see the linear kernel does not do a good job at classifying the data only getting a 51.5% accuracy (only slightly better than guessing) since no line cleanly fits the data. So lets try the polynomial kernel.
+
+```{r}
+# Use a polynomial kernel to classify the data with the SVM function
+
+# Write a cross validation function for polynomial kernels that takes degrees, cost, and gamma into account
+cross_poly <- function(folds, degrees, costs, gammas, dataset, seed) {
+  results <- data.frame(degree = numeric(0), cost = numeric(0), gamma = numeric(0), accuracy = numeric(0))
+  iteration <- 0
+
+  for (degree in degrees) {
+    for (cost in costs) {
+      for (gamma in gammas) {
+        set.seed(seed)
+        print(iteration)
+        iteration <- iteration + 1
+        svm_cross <- svm(class ~ ., data = dataset, kernel = "polynomial", degree = degree, cross = folds, cost = cost, gamma = gamma)
+
+        results <- rbind(results, data.frame(degree = degree, cost = cost, gamma = gamma, accuracy = svm_cross$tot.accuracy))
+      }
+    }
+  }
+
+  return(results)
+}
+
+# Run our function
+degrees <- c(4, 5, 6)
+costs <- c(1, 10, 100)
+gammas <- c(0.1, 1, 10)
+
+# Running this code will take awhile, maybe uncomment it when knitting the pdf for the final time.
+# validation_data_frame_poly <- cross_poly(2, degrees, costs, gammas, data2, seed = 2024)
+
+# Print the top 5 best degree, cost, and gamma values
+# print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy), ][1:5, ])
+
+# Make the best poly model based on the cross validation
+svm_poly <- svm(class ~ ., data = data2, kernel = "polynomial", degree = 5, cost = 10, gamma = 0.1)
+
+# Check the svm_poly model on a confusion matrix
+confusionMatrix(predict(svm_poly, data2), data2$class)
+
+predicted_labels_poly <- predict(svm_poly, newdata = grid)
+
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_poly], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+```
+
+We can see that the very best polynomial kernal from our cross validation only gets an accuracy of 51.1% which is not very good, in fact it is worse than the linear kernel or just guessing the more likely (at least based on the test data) classification every time. 
+
+Now let's check how a logistic regression model does on this data.
+
+```{r}
+# Use a logistic regression model to classify the data
+logit_model <- glm(class ~ x + y, data = data2, family = "binomial")
+# Predict using the model
+predicted_probabilities <- predict(logit_model, type = "response")
+
+# Change all the Falses to 0 and Trues to 1
+predicted_probabilities <- ifelse(predicted_probabilities > 0.5, 1, 0)
+
+# Create a confusion matrix to evaluate the model
+library(caret)
+confusionMatrix(as.factor(predicted_probabilities), as.factor(data2$class))
+
+# Plot the decision boundary
+predicted_labels_logit <- predicted_probabilities > 0.5
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_logit + 1], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+```
+
+As we can see from the decision boundary this model isn't very good at classifying the data, only getting an accuracy of 54.4%. This is better than the linear kernel, but still not very good, and looking at the decision boundary we can clearly see that it is no where close to the true decision boundary.
+
+Finally lets check how a KNN model does on this data.
+
+```{r}
+# Load the required class library
+library(class)
+
+# Use a KNN model to classify the data
+knn_model <- knn(train = data2[, c("x", "y")], test = data2[, c("x", "y")], cl = data2$class, k = 5)
+
+# Convert knn_model to numeric
+knn_model <- as.numeric(knn_model)
+
+# Convert 1s to 0s and 2s to 1s
+knn_model <- knn_model - 1
+
+# Create a confusion matrix to evaluate the model
+library(caret)
+confusionMatrix(as.factor(knn_model), data2$class)
+
+# Create the grid for the decision boundary
+predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid, cl = data2$class, k = 5)
+
+# Convert knn_model to numeric
+predicted_labels_knn <- as.numeric(predicted_labels_knn)
+
+# Convert 1s to 0s and 2s to 1s
+predicted_labels_knn <- predicted_labels_knn - 1
+
+# Plot the decision boundary
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn + 1], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+```
+
+This time the accuracy is quite good at 81.8% which is almost as good as the RBF kernel. However, the decision boundary doesn't look quite as good as the RBF kernel and struggles to keep a consistent width throughout the decision boundary. It also has some strange gaps similar to the RBF kernel. Let's see how it does on the test data just to be sure.
+
+```{r}
+# Create a confusion matrix to evaluate the KNN model
+knn_model_test <- knn(train = data2[, c("x", "y")], test = test_data2[, c("x", "y")], cl = data2$class, k = 5)
+
+# Convert knn_model to numeric
+knn_model_test <- as.numeric(knn_model_test)
+
+# Convert 1s to 0s and 2s to 1s
+knn_model_test <- knn_model_test - 1
+
+# Create a confusion matrix to evaluate the model
+library(caret)
+confusionMatrix(as.factor(knn_model_test), test_data2$class)
+```
+
+- Potential TODO: Try a naive bayes model on this data. - Kellen Nankervis
+
+On the test data the KNN model gets an accuracy of 72.2% which is a bit lower than the 75.6% the RBF kernel got. This is likely due to the decision boundary not being as good as the RBF kernel. Still this would be a reasonable candidate for a model to use on this data, especially since we do not need to run cross-validation to find the best parameters for the model. If we want the very best fit however, the RBF kernel with parameters picked through cross-validation would be the best choice.
+
+- TODO: Work on 2's and 7's example. - Kellen Nankervis
+
+- TODO: Write final conclusion. - Kellen Nankervis
 
 - Example of how to plot I found online. Should be removed for final paper but I thought it might be helpful to look at. - Kellen Nankervis
 ```{r}
