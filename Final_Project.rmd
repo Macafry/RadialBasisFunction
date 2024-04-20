@@ -132,7 +132,7 @@ def poly_kernel(p):
 ```
 
 SVM epic fail:
-```{python}
+```{python, echo=F, cache=T}
 plot_with_boundary("linear")
 ```
 
