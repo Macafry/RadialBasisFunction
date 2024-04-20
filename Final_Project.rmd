@@ -333,7 +333,6 @@ plot_with_boundary("rbf")
 
 
 ## Example Data
-- TODO: Maybe make the plots look nicer if we can. Add some more surrounding text to the whole example portion. - Kellen Nankervis
 To show the power of the Radial Basis Function we will first use a generated data set.
 
 Before we get started let's briefly discuss the cost and gamma parameters. The cost parameter is the cost of misclassifying a data point. A higher cost will lead to a more complex model that will try to classify all data points correctly. It trades off misclassification of training examples against increasing the margin. Larger values of cost will lead to a smaller margin. In this way cost behaves as a regularization parameter. The gamma parameter controls how far the influence of a single training example reaches. A low gamma will consider points far away from the decision boundary in calculations, while a high gamma will consider only points close to the decision boundary. The gamma parameters can be seen as the inverse of the radius of influence of samples selected by the model as support vectors.
@@ -419,7 +418,7 @@ print(svmfit)
 confusionMatrix(predict(svmfit, data2), data2$class)
 ```
 
-This doesn't look that good as it is hardly better than the trivial approach which would get 51.3% correct compared to the 55.1% of our model. Let's look at the decision boundary to see what it thinks.
+This doesn't look that good as it is hardly better than the trivial approach which would get 51.3% correct compared to the 55.1% of our model. For the data in this project we have a split near 50% for both classes and predicting one class incorrectly isn't worse than the other which means that accuracy works fine as an overall metric to gadge the models ability. For all future confusion matixes we will look at this and kappa only to save space. Let's look at the decision boundary to see what it thinks.
 
 ```{r}
 # Define colors for data points
@@ -478,6 +477,7 @@ cross_validate <- function(folds, costs, gammas, data, seed) {
   return(results)
 }
 
+# Create a simpler confusion matrix function
 simpler_cm <- function(cm.out) {
     print(cm.out[[2]])
     print(cm.out[[3]][1:2])
@@ -538,7 +538,7 @@ test_data2 <- data.frame(class = test_data$class, x = test_data$x, y = test_data
 test_data2$class <- as.factor(test_data2$class)
 
 # Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit_best, test_data2), test_data2$class)
+confusionMatrix(predict(svmfit_best, test_data2), test_data2$class) |> simpler_cm()
 ```
 
 We see we get an accuracy of 75.6% on the test data. This is a bit lower than the 82.1% we got on the training data, but it is actually better than what we got when doing cross validation on the training data likely since we trained on the full data set where in cross validation we only trained on 80% of the data. This shows that the model is generalizing well to new data.
@@ -569,7 +569,7 @@ test_data2$new_theta <- new_theta
 test_data2$post_offset_class <- as.factor(test_data2$post_offset_class)
 
 # Now compare the true class to the predicted class given by the true decision boundary
-confusionMatrix(test_data2$post_offset_class, test_data2$class)
+confusionMatrix(test_data2$post_offset_class, test_data2$class) |> simpler_cm()
 ```
 
 We see that due to the offset being applied to the data, even if we re applied the true decision boundary before offsetting the data we would only get an accuracy of 80.7%. This is good since that means our model is only 5.2% off a model that found the true decision boundary before the offset was applied.
@@ -614,7 +614,7 @@ Lets start with a linear kernel and a polynomial kernel since those are fairly e
 svmfit_linear <- svm(class ~ ., data = data2, kernel = "linear", cost = 1000)
 
 # Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit_linear, data2), data2$class)
+confusionMatrix(predict(svmfit_linear, data2), data2$class) |> simpler_cm()
 
 predicted_labels_linear <- predict(svmfit_linear, newdata = grid)
 
@@ -665,7 +665,7 @@ gammas <- c(0.1, 1, 10)
 svm_poly <- svm(class ~ ., data = data2, kernel = "polynomial", degree = 5, cost = 10, gamma = 0.1)
 
 # Check the svm_poly model on a confusion matrix
-confusionMatrix(predict(svm_poly, data2), data2$class)
+confusionMatrix(predict(svm_poly, data2), data2$class) |> simpler_cm()
 
 predicted_labels_poly <- predict(svm_poly, newdata = grid)
 
@@ -688,7 +688,7 @@ predicted_probabilities <- predict(logit_model, type = "response")
 predicted_probabilities <- ifelse(predicted_probabilities > 0.5, 1, 0)
 
 # Create a confusion matrix to evaluate the model
-confusionMatrix(as.factor(predicted_probabilities), as.factor(data2$class))
+confusionMatrix(as.factor(predicted_probabilities), as.factor(data2$class)) |> simpler_cm()
 
 # Plot the decision boundary
 predicted_labels_logit <- predicted_probabilities > 0.5
@@ -762,7 +762,7 @@ knn_model <- as.numeric(knn_model)
 knn_model <- knn_model - 1
 
 # Create a confusion matrix to evaluate the model
-confusionMatrix(as.factor(knn_model), data2$class)
+confusionMatrix(as.factor(knn_model), data2$class) |> simpler_cm()
 
 # Create the grid for the decision boundary
 predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid, cl = data2$class, k = k)
@@ -793,7 +793,7 @@ knn_model_test <- as.numeric(knn_model_test)
 knn_model_test <- knn_model_test - 1
 
 # Create a confusion matrix to evaluate the model
-confusionMatrix(as.factor(knn_model_test), test_data2$class)
+confusionMatrix(as.factor(knn_model_test), test_data2$class) |> simpler_cm()
 ```
 
 - Potential TODO: Try a naive bayes model on this data. - Kellen Nankervis
@@ -838,7 +838,7 @@ First let's try fitting a linear kernel to the data just to get a baseline, from
 svmfit_linear_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "linear", cost = 1000)
 
 # Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit_linear_mnist, mnist_27$train), mnist_27$train$y)
+confusionMatrix(predict(svmfit_linear_mnist, mnist_27$train), mnist_27$train$y) |> simpler_cm()
 
 # Create a grid of points for prediction
 x1_grid <- seq(min(mnist_27$train$x_1), max(mnist_27$train$x_1), length.out = 100)
@@ -859,7 +859,7 @@ We can see that our linear kernal does not quite do the job, it's accuracy of 78
 svmfit_rbf_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "radial", cost = 1, gamma = 1)
 
 # Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit_rbf_mnist, mnist_27$train), mnist_27$train$y)
+confusionMatrix(predict(svmfit_rbf_mnist, mnist_27$train), mnist_27$train$y) |> simpler_cm()
 
 predicted_labels_rbf_mnist <- predict(svmfit_rbf_mnist, newdata = grid)
 
@@ -890,7 +890,7 @@ From this we see that lowering the cost down to 0.1 and keeping ht gamma at 1 se
 svmfit_best_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "radial", cost = 0.1, gamma = 1)
 
 # Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit_best_mnist, mnist_27$train), mnist_27$train$y)
+confusionMatrix(predict(svmfit_best_mnist, mnist_27$train), mnist_27$train$y) |> simpler_cm()
 
 predicted_labels_best_mnist <- predict(svmfit_best_mnist, newdata = grid)
 
@@ -903,7 +903,7 @@ I don't see much of a difference between the two decision boundaries and the acc
 
 ```{r}
 # Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit_best_mnist, mnist_27$test), mnist_27$test$y)
+confusionMatrix(predict(svmfit_best_mnist, mnist_27$test), mnist_27$test$y) |> simpler_cm()
 ```
 
 We can see that on the test data which was 20% of the whole data set the model got an accuracy of 83.5% which is basically the same as the training. This means we have found a good model that generalizes well to new data and also did well on it's own training data. This means we have found a good mix of bias and variance in our model.
@@ -941,7 +941,7 @@ knn_model_mnist <- as.numeric(knn_model_mnist)
 knn_model_mnist <- ifelse(knn_model_mnist == 1, 2, 7)
 
 # Create a confusion matrix to evaluate the model
-confusionMatrix(as.factor(knn_model_mnist), training_matrix$class)
+confusionMatrix(as.factor(knn_model_mnist), training_matrix$class) |> simpler_cm()
 
 # Create the grid for the decision boundary
 x1_grid <- seq(min(training_matrix$x), max(training_matrix$x), length.out = 100)
@@ -967,7 +967,7 @@ mnist_27_test <- as.data.frame(mnist_27$test)
 colnames(mnist_27_test) <- c("class", "x", "y")
 
 # Create a confusion matrix to evaluate the KNN model
-knn_model_test_mnist <- knn(train = training_matrix[, c("x", "y")], test = mnist_27_test[, c("x", "y")], cl = training_matrix$class, k = k)
+knn_model_test_mnist <- knn(train = training_matrix[, c("x", "y")], test = mnist_27_test[, c("x", "y")], cl = training_matrix$class, k = k) |> simpler_cm()
 
 # Convert knn_model to numeric
 knn_model_test_mnist <- as.numeric(knn_model_test_mnist)
@@ -976,7 +976,7 @@ knn_model_test_mnist <- as.numeric(knn_model_test_mnist)
 knn_model_test_mnist <- ifelse(knn_model_test_mnist == 1, 2, 7)
 
 # Create a confusion matrix to evaluate the model
-confusionMatrix(as.factor(knn_model_test_mnist), mnist_27_test$class)
+confusionMatrix(as.factor(knn_model_test_mnist), mnist_27_test$class) |> simpler_cm()
 
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn_mnist], pch = ".", cex = 3.5, xlab = "Proportion of dark pixels in the upper-left quadrant", ylab = "Proportion of dark pixels in the lower-right quadrant")
