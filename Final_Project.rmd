@@ -33,6 +33,9 @@ urlcolor: blue
 - TODO: Add more text to the introduction. - Kellen Nankervis
 
 As we discussed in notes 11 suport vector machines are a powerful tool for classification. They work by finding the hyperplane that maximizes the margin between the two classes. The kernel trick is a way to transform the data into a higher dimensional space where the data becomes linearly separable. This is done by using a kernel function to calculate the dot product of the transformed data without actually transforming the data. This allows us to use the SVM algorithm to classify data that is not linearly separable in the original space. In this project we will explore the radial basis function kernel and how it is an extremely powerful tool for classifying data that could not be classified with a linear kernel or other data with a extremely curved decision boundary.
+```{r}
+reticulate::py_install("sklearn")
+```
 
 Non-linear decision boundary:
 ```{python, echo=F, cache=T}
@@ -51,9 +54,9 @@ template = np.array(
 
 X = np.vstack(
     [
-        template + np.array([0,0]), template + np.array([1,0]), template + np.array([2,0]),
-        template + np.array([0,1]), template + np.array([1,1]), template + np.array([2,1]),
-        template + np.array([0,2]), template + np.array([1,2]), template + np.array([2,2])
+        template + np.array([-3,-3]), template + np.array([-1,-3]), template + np.array([1,-3]),
+        template + np.array([-3,-1]), template + np.array([-1,-1]), template + np.array([1,-1]),
+        template + np.array([-3,1]), template + np.array([-1,1]), template + np.array([1,1])
     ]
 )
 
@@ -61,7 +64,7 @@ y = np.array(([0] * 5 + [1] * 5) * 4 + [0] * 5)
 
 # Plotting settings
 fig, ax = plt.subplots(figsize=(4, 3))
-x_min, x_max, y_min, y_max = 0, 4, 0, 4
+x_min, x_max, y_min, y_max = -3, 3, -3, 3
 ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 
 # Plot samples by color and add legend
