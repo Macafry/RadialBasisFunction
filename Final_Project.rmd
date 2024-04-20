@@ -34,6 +34,8 @@ urlcolor: blue
 
 As we discussed in notes 11 suport vector machines are a powerful tool for classification. They work by finding the hyperplane that maximizes the margin between the two classes. The kernel trick is a way to transform the data into a higher dimensional space where the data becomes linearly separable. This is done by using a kernel function to calculate the dot product of the transformed data without actually transforming the data. This allows us to use the SVM algorithm to classify data that is not linearly separable in the original space. In this project we will explore the radial basis function kernel and how it is an extremely powerful tool for classifying data that could not be classified with a linear kernel or other data with a extremely curved decision boundary.
 
+In Notes 11, we explored Support Vector Machines, or SVMs, which are highly powerful classifiers. To put it briefly, they work by finding a linear hyperplane which maximizes the margin between two classes, called the decision boundary. But what happens if our data are not linearly separable and therefore a linear decision boundary cannot be formed? We can use a kernel trick, which allows us to transform the data into a higher dimension, becoming linearly separable. The RBF kernel trick calculates the dot product of the transformed data without having to actually transform the data. In this project, we will further explore how we can manipulate data in ways that allow us to use the SVM algorithm on non linear data. 
+
 Non-linear decision boundary:
 ```{python, echo=F, cache=T}
 import matplotlib
@@ -331,6 +333,24 @@ In essence RBF is so special because it performs the optimization over an infini
 plot_with_boundary("rbf")
 ```
 
+# Strengths and Weaknesses
+Strengths:
+1. RBFs are able to perform optimization over an n-dimensional space using a relatively simple formula, making them computationally inexpensive while still having a lot of power. 
+
+2. There are no preassumptions that need to be made about the data, making it a great tool when the distribution of data is not known. 
+
+3. RBF decisions are local ones, making it a more robust algorithm that is not sensitive to outliers, in comparison to some other kernels. 
+
+4. The hyperparameter $\gamma$ and the cost parameter allow us to be more flexible about model specificity. 
+
+Weaknesses: 
+1. RBFs are non probablistic, meaning points are only classified as being in one class or the other. We cannot adjust the probability cutoff for classifying points like we might in logistic regression. 
+
+2. Like SVMs, we do not get easily interpretable coefficients. So, it becomes difficult to assess the influence of a specific variable on classification.
+
+3. While this isn't necessarily a weakness per se, it's worth mentioning that the RBF kernel is non-parametric. This makes traditional types of inference significantly harder. 
+
+4. Because RBFs are more complex models, it is easier to overfit them. 
 
 ## Example Data
 - TODO: Maybe make the plots look nicer if we can. Add some more surrounding text to the whole example portion. - Kellen Nankervis
