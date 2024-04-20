@@ -453,7 +453,8 @@ grid <- expand.grid(x = x1_grid, y = x2_grid)
 
 predicted_labels <- predict(svmfit, newdata = grid)
 
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels],
+ pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 
 # Plot the data points
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
@@ -464,7 +465,8 @@ If we just want to plot the decision boundary we can use the following code.
 
 ```{r}
 # Plot the decision boundary
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels],
+ pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
 
@@ -483,10 +485,12 @@ cross_validate <- function(folds, costs, gammas, data, seed) {
       set.seed(seed)
 
       # Use cross-validation to find the best cost and gamma values
-      svm_cross <- svm(class ~ ., data = data, kernel = "radial", cross = folds, cost = cost, gamma = gamma)
+      svm_cross <- svm(class ~ ., data = data, kernel = "radial",
+       cross = folds, cost = cost, gamma = gamma)
 
       # Store the results
-      results <- rbind(results, data.frame(cost = cost, gamma = gamma, accuracy = svm_cross$tot.accuracy))
+      results <- rbind(results, data.frame(cost = cost, gamma = gamma,
+       accuracy = svm_cross$tot.accuracy))
     }
   }
 
@@ -502,7 +506,8 @@ simpler_cm <- function(cm.out) {
 
 ```{r}
 # Run our function
-validation_data_frame <- cross_validate(5, c(0.1, 1, 10, 100, 1000), c(0.01, 0.1, 1, 10, 100), data2, seed = 2024)
+validation_data_frame <- cross_validate(5, c(0.1, 1, 10, 100, 1000),
+ c(0.01, 0.1, 1, 10, 100), data2, seed = 2024)
 
 # Print the top 5 best cost and gamma values
 print(validation_data_frame[order(-validation_data_frame$accuracy), ][1:5, ])
@@ -571,7 +576,8 @@ for (j in 1:n) {
   new_r[j] <- sqrt(test_data2$x[j]^2 + test_data2$y[j]^2)
   new_theta[j] <- atan2(test_data2$y[j], test_data2$x[j])
 
-  ifelse(new_theta[j] < 0, new_theta[j] <- new_theta[j] + 2 * pi, new_theta[j] <- new_theta[j])
+  ifelse(new_theta[j] < 0, new_theta[j] <- new_theta[j] + 2 * pi, 
+   new_theta[j] <- new_theta[j])
 
   # Classify observations based on r and theta
   post_offset_class[j] <- ifelse((new_r[j] + new_theta[j]) %% (2 * pi) < pi, 1, 0)
@@ -638,7 +644,8 @@ confusionMatrix(predict(svmfit_linear, data2), data2$class) |> simpler_cm()
 
 predicted_labels_linear <- predict(svmfit_linear, newdata = grid)
 
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".",
+ cex = 3.5, xlab = "x", ylab = "y")
 
 # Plot the data points
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
@@ -658,7 +665,6 @@ cross_poly <- function(folds, degrees, costs, gammas, dataset, seed) {
     for (cost in costs) {
       for (gamma in gammas) {
         set.seed(seed)
-        print(iteration)
         iteration <- iteration + 1
         svm_cross <- svm(class ~ ., data = dataset, kernel = "polynomial", degree = degree, cross = folds, cost = cost, gamma = gamma)
 
@@ -675,23 +681,27 @@ degrees <- c(4, 5, 6)
 costs <- c(1, 10, 100)
 gammas <- c(0.1, 1, 10)
 
-# Running this code will take awhile, maybe uncomment it when knitting the pdf for the final time.
-#validation_data_frame_poly <- cross_poly(2, degrees, costs, gammas, data2, seed = 2024)
+# Running this code will take awhile to run, to speed it up we will only use 2 folds
+#validation_data_frame_poly <- cross_poly(2, degrees, costs,
+# gammas, data2, seed = 2024)
 
 # Print the top 5 best degree, cost, and gamma values
-# print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy), ][1:5, ])
+#print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy),
+# ][1:5, ])
 ```
 
 ```{r}
 # Make the best poly model based on the cross validation
-svm_poly <- svm(class ~ ., data = data2, kernel = "polynomial", degree = 5, cost = 10, gamma = 0.1)
+svm_poly <- svm(class ~ ., data = data2, kernel = "polynomial", degree = 5,
+ cost = 10, gamma = 0.1)
 
 # Check the svm_poly model on a confusion matrix
 confusionMatrix(predict(svm_poly, data2), data2$class) |> simpler_cm()
 
 predicted_labels_poly <- predict(svm_poly, newdata = grid)
 
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_poly], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_poly], pch = ".", cex = 3.5,
+ xlab = "x", ylab = "y")
 
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
@@ -710,11 +720,13 @@ predicted_probabilities <- predict(logit_model, type = "response")
 predicted_probabilities <- ifelse(predicted_probabilities > 0.5, 1, 0)
 
 # Create a confusion matrix to evaluate the model
-confusionMatrix(as.factor(predicted_probabilities), as.factor(data2$class)) |> simpler_cm()
+confusionMatrix(as.factor(predicted_probabilities),
+ as.factor(data2$class)) |> simpler_cm()
 
 # Plot the decision boundary
 predicted_labels_logit <- predicted_probabilities > 0.5
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_logit + 1], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_logit + 1], pch = ".",
+ cex = 3.5, xlab = "x", ylab = "y")
 ```
 
 As we can see from the decision boundary this model isn't very good at classifying the data, only getting an accuracy of 54.4%. This is better than the linear kernel, but still not very good, and looking at the decision boundary we can clearly see that it is no where close to the true decision boundary.
@@ -775,7 +787,8 @@ We find that the best k value is 3 with an accuracy of 72.2%. I assume the k is 
 k <- 3
 
 # Use a KNN model to classify the data
-knn_model <- knn(train = data2[, c("x", "y")], test = data2[, c("x", "y")], cl = data2$class, k = k)
+knn_model <- knn(train = data2[, c("x", "y")], test = data2[, c("x", "y")],
+ cl = data2$class, k = k)
 
 # Convert knn_model to numeric
 knn_model <- as.numeric(knn_model)
@@ -787,7 +800,8 @@ knn_model <- knn_model - 1
 confusionMatrix(as.factor(knn_model), data2$class) |> simpler_cm()
 
 # Create the grid for the decision boundary
-predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid, cl = data2$class, k = k)
+predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid,
+ cl = data2$class, k = k)
 ```
 ```{r, echo=FALSE}
 # Convert knn_model to numeric
@@ -798,7 +812,8 @@ predicted_labels_knn <- predicted_labels_knn - 1
 ```
 ```{r}
 # Plot the decision boundary
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn + 1], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn + 1], pch = ".",
+ cex = 3.5, xlab = "x", ylab = "y")
 
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
