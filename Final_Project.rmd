@@ -34,6 +34,101 @@ urlcolor: blue
 
 As we discussed in notes 11 suport vector machines are a powerful tool for classification. They work by finding the hyperplane that maximizes the margin between the two classes. The kernel trick is a way to transform the data into a higher dimensional space where the data becomes linearly separable. This is done by using a kernel function to calculate the dot product of the transformed data without actually transforming the data. This allows us to use the SVM algorithm to classify data that is not linearly separable in the original space. In this project we will explore the radial basis function kernel and how it is an extremely powerful tool for classifying data that could not be classified with a linear kernel or other data with a extremely curved decision boundary.
 
+Non-linear decision boundary:
+```{python, echo=F, cache=T}
+import matplotlib.pyplot as plt
+import numpy as np
+
+template = np.array(
+    [
+        [1, 1],
+        [1.1, 1.1],
+        [0.9, 0.9],
+        [1.1, 0.9],
+        [0.9, 1.1]
+    ]
+)
+
+X = np.vstack(
+    [
+        template + np.array([0,0]), template + np.array([1,0]), template + np.array([2,0]),
+        template + np.array([0,1]), template + np.array([1,1]), template + np.array([2,1]),
+        template + np.array([0,2]), template + np.array([1,2]), template + np.array([2,2])
+    ]
+)
+
+y = np.array(([0] * 5 + [1] * 5) * 4 + [0] * 5)
+
+# Plotting settings
+fig, ax = plt.subplots(figsize=(4, 3))
+x_min, x_max, y_min, y_max = 0, 4, 0, 4
+ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
+
+# Plot samples by color and add legend
+scatter = ax.scatter(X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k")
+ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
+ax.set_title("Samples in two-dimensional feature space")
+_ = plt.show()
+```
+
+```{python, echo=F, cache=T}
+from sklearn import svm
+from sklearn.inspection import DecisionBoundaryDisplay
+
+
+def plot_with_boundary(kernel, kernel_label=None):
+    if kernel_label is None:
+      kernel_label = kernel
+
+    # Train the SVC
+    clf = svm.SVC(kernel=kernel, gamma=1).fit(X, y)
+
+    # Settings for plotting
+    _, ax = plt.subplots(figsize=(4, 3))
+    x_min, x_max, y_min, y_max = -3, 3, -3, 3
+    ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
+
+    # Plot decision boundary and margins
+    common_params = {"estimator": clf, "X": X, "ax": ax}
+    DecisionBoundaryDisplay.from_estimator(
+        **common_params,
+        response_method="predict",
+        plot_method="pcolormesh",
+        alpha=0.3,
+    )
+    DecisionBoundaryDisplay.from_estimator(
+        **common_params,
+        response_method="decision_function",
+        plot_method="contour",
+        levels=[-1, 0, 1],
+        colors=["k", "k", "k"],
+        linestyles=["--", "-", "--"],
+    )
+
+    
+      # Plot bigger circles around samples that serve as support vectors
+    ax.scatter(
+        X[clf.support_][:, 0],
+        X[clf.support_][:, 1],
+        s=250,
+        facecolors="none",
+        edgecolors="k",
+    )
+    # Plot samples by color and add legend
+    ax.scatter(X[:, 0], X[:, 1], c=y, s=150, edgecolors="k")
+    ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
+    ax.set_title(f" Decision boundaries of {kernel_label} kernel in SVC")
+
+    _ = plt.show()
+    
+def power_kernel(p):
+    return lambda A, B: (A @ B.T) ** p
+
+def poly_kernel(p):
+    return lambda A, B: (A @ B.T + 1 ) ** p
+```
+
+
 
 ## Dual Problem
 For the Support Vector Machine algorithm, our goal is to find a $\beta$ and $c$ under the following optimization objective:
@@ -148,6 +243,10 @@ $$
 
 and $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = \phi_{Power(2)}(\boldsymbol{a}) \cdot \phi_{Power(2)}(\boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$. However, notice we don't have to compute $\phi_{Power(2)}$ if we take $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$ instead.
 
+```{python, echo=F, cache=T}
+plot_with_boundary(power_kernel(2), "Power(2)")
+```
+
 Likewise, one can show that: 
 \begin{align*}
 K_{Power(3)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^3 \text{ corresponds to the transformation containing all 3-way interaction terms}\\
@@ -156,11 +255,33 @@ K_{Power(4)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymb
 K_{Power(n)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^n \text{ corresponds to the transformation containing all n-way interaction terms}
 \end{align*}
 
+```{python, echo=F, cache=T}
+for i in range(3,6+1):
+  plot_with_boundary(power_kernel(i), f"Power({i})")
+```
+
+```{python, echo=F, cache=T}
+plot_with_boundary(power_kernel(50), "Power(50)")
+```
+
 However, in Applied Statistics we learned that whenever we include high order terms, we also want to include all lower level terms. So, let's inspect the following kernel:
 
 $K_{Poly(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^2 = \underset{\text{2-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^2} + \underset{\text{1-way}}{2(\boldsymbol{a} \cdot \boldsymbol{b})} + \underset{\text{0-way}}{1}$ 
 
 So, $K_{Poly(2)}$ gives us the 2-way interaction terms and all the lower order terms. Likewise,  $K_{Poly(n)}= (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^n$ gives us the n-way interaction terms and below, precisely what we wanted. This is also the polynomial kernel for SVM with $\gamma$ = 1.
+
+```{python, echo=F, cache=T}
+plot_with_boundary(poly_kernel(2), "Poly(2)")
+```
+
+```{python, echo=F, cache=T}
+for i in range(3,6+1):
+  plot_with_boundary(poly_kernel(i), f"Poly({i})")
+```
+```{python, echo=F, cache=T}
+plot_with_boundary(poly_kernel(50), "Poly(50)")
+```
+
 
 This proposes an interesting conundrum: which n should we pick? We could try using using cross-validation. However, our friend ***Taylor*** might have a way of trying out all n values at the same time, while giving more weight to lower order terms than the higher order terms (following the principle of parsimony).
 
@@ -193,11 +314,15 @@ Now, let's raise it to the $2\gamma$ to add a control parameter.
 $\left(\operatorname{exp}\left(-\dfrac{1}{2}\Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\right)\right)^{2\gamma} = \operatorname{exp}\Big(-\gamma \Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\Big)$
 
 
-Finally, after 4 pages, we have arrived to the Radial Basis Function Kernel:
+Finally, we have arrived to the Radial Basis Function Kernel:
 
 $K_{RBF}(\boldsymbol{a}, \boldsymbol{b}) = \operatorname{exp}\Big(-\gamma \Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\Big)$
 
 In essence RBF is so special because it performs the optimization over an infinite-dimensional feature space. All that with a really simple formula, which allows for very intricate decision boundaries with minimal computational power.
+
+```{python, echo=F, cache=T}
+plot_with_boundary("rbf")
+```
 
 
 ## Example Data
