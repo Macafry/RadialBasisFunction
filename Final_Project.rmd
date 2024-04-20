@@ -131,6 +131,10 @@ def poly_kernel(p):
     return lambda A, B: (A @ B.T + 1 ) ** p
 ```
 
+SVM epic fail:
+```{python}
+plot_with_boundary("linear")
+```
 
 
 ## Dual Problem
