@@ -28,15 +28,11 @@ editor_options:
 urlcolor: blue
 ---
 
-Hello World!
-
-```{r}
-print("Hello world!")
-```
-
 ## Introduction
 
-- TODO
+- TODO: Add more text to the introduction. - Kellen Nankervis
+
+As we discussed in notes 11 suport vector machines are a powerful tool for classification. They work by finding the hyperplane that maximizes the margin between the two classes. The kernel trick is a way to transform the data into a higher dimensional space where the data becomes linearly separable. This is done by using a kernel function to calculate the dot product of the transformed data without actually transforming the data. This allows us to use the SVM algorithm to classify data that is not linearly separable in the original space. In this project we will explore the radial basis function kernel and how it is an extremely powerful tool for classifying data that could not be classified with a linear kernel or other data with a extremely curved decision boundary.
 
 
 ## Dual Problem
@@ -205,8 +201,10 @@ In essence RBF is so special because it performs the optimization over an infini
 
 
 ## Example Data
-- TODO: Fix colors so they are the same as the later plot. Add some more surrounding text to the whole example portion. - Kellen Nankervis
+- TODO: Maybe make the plots look nicer if we can. Add some more surrounding text to the whole example portion. - Kellen Nankervis
 To show the power of the Radial Basis Function we will first use a generated data set.
+
+Before we get started let's briefly discuss the cost and gamma parameters. The cost parameter is the cost of misclassifying a data point. A higher cost will lead to a more complex model that will try to classify all data points correctly. It trades off misclassification of training examples against increasing the margin. Larger values of cost will lead to a smaller margin. In this way cost behaves as a regularization parameter. The gamma parameter controls how far the influence of a single training example reaches. A low gamma will consider points far away from the decision boundary in calculations, while a high gamma will consider only points close to the decision boundary. The gamma parameters can be seen as the inverse of the radius of influence of samples selected by the model as support vectors.
 
 First we will generate the data. For this example I am creating a sort of spiral pattern using 1000 data points. I'm using this pattern because it is a case where a linear kernel would not work well. The data is generated in polar coordinates and then converted to x and y coordinates. The data is then offset a bit so there is some overlap between the two classes.
 
@@ -256,19 +254,13 @@ generate_spiral <- function(n, r, r_offset, colors, seed) {
 data <- generate_spiral(n, r, r_offset, colors, seed = 2024)
 ```
 
-- TODO: Decide which plots to show and which to delete. Commented out ones would be my current suggestions to delete or at least move to later in the document. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
+- TODO: Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 
 Now lets take a look at this generated data.
 
 ```{r}
 # Plot the data in the x and y coordinates
 plot(data$x, data$y, col = data$color, pch = 19, xlab = "x", ylab = "y")
-
-# Plot the data in polar coordinates
-# plot(data$r, data$theta, col = data$color, pch = 19, xlab = "r", ylab = "theta")
-
-# Plot r*theta vs. r^2 * theta^2
-# plot(data$r + data$theta, data$r * data$theta, col = data$color, pch = 19, xlab = "r*theta", ylab = "r^2 * theta^2")
 ```
 
 As we can see it matches a spiral pattern with a bit of overlap between the two classes. Since we know how the data was genreated it might be smart to convert to polar coordinates, but if this data weren't generated we might not make that connection. This is where the RBF kernel can be very useful.
@@ -321,17 +313,8 @@ points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
 
-- If we want to plot the decision boundary above the points we can use the following code. - Kellen Nankervis
-```{r}
-# Plot the data points
-plot(data2$x, data2$y, col = point_colors[data2$class], pch = 19, xlab = "x", ylab = "y")
+To just plot the decision boundary we can use the following code.
 
-# Plot the decision boundary
-points(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5)
-legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
-```
-
-- Or to just plot the decision boundary we can use the following code. - Kellen Nankervis
 ```{r}
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
@@ -362,7 +345,9 @@ cross_validate <- function(folds, costs, gammas, data, seed) {
 
   return(results)
 }
+```
 
+```{r}
 # Run our function
 validation_data_frame <- cross_validate(5, c(0.1, 1, 10, 100, 1000), c(0.01, 0.1, 1, 10, 100), data2, seed = 2024)
 
@@ -387,7 +372,9 @@ plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".", ce
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
-- Or to just plot the decision boundary which I think is my preferred method right now. - Kellen Nankervis
+
+Let's look at just the decision boundary.
+
 ```{r}
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
@@ -495,6 +482,9 @@ confusionMatrix(predict(svmfit_linear, data2), data2$class)
 predicted_labels_linear <- predict(svmfit_linear, newdata = grid)
 
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+
+# Plot the data points
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
 As we can see the linear kernel does not do a good job at classifying the data only getting a 51.5% accuracy (only slightly better than guessing) since no line cleanly fits the data. So lets try the polynomial kernel.
@@ -543,9 +533,11 @@ confusionMatrix(predict(svm_poly, data2), data2$class)
 predicted_labels_poly <- predict(svm_poly, newdata = grid)
 
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_poly], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
-We can see that the very best polynomial kernal from our cross validation only gets an accuracy of 51.1% which is not very good, in fact it is worse than the linear kernel or just guessing the more likely (at least based on the test data) classification every time. 
+We can see that the very best polynomial kernel from our cross validation only gets an accuracy of 51.1% which is not very good, in fact it is worse than the linear kernel or just guessing the more likely (at least based on the test data) classification every time. 
 
 Now let's check how a logistic regression model does on this data.
 
@@ -559,7 +551,6 @@ predicted_probabilities <- predict(logit_model, type = "response")
 predicted_probabilities <- ifelse(predicted_probabilities > 0.5, 1, 0)
 
 # Create a confusion matrix to evaluate the model
-library(caret)
 confusionMatrix(as.factor(predicted_probabilities), as.factor(data2$class))
 
 # Plot the decision boundary
@@ -575,8 +566,57 @@ Finally lets check how a KNN model does on this data.
 # Load the required class library
 library(class)
 
+# Write a cross validation function for KNN that takes k into account
+cross_knn <- function(folds, ks, dataset, seed) {
+  set.seed(seed)
+
+  # Create folds
+  folds_obj <- createFolds(dataset$class, k = folds, list = TRUE, returnTrain = FALSE)
+
+  results <- data.frame(k = numeric(0), accuracy = numeric(0))
+
+  for (k in ks) {
+    fold_accuracies <- c()
+    for (fold in seq_along(folds_obj)) {
+      train_indices <- unlist(folds_obj[-fold])
+      test_indices <- unlist(folds_obj[fold])
+
+      train_data <- dataset[train_indices, c("x", "y")]
+      train_labels <- dataset$class[train_indices]
+
+      test_data <- dataset[test_indices, c("x", "y")]
+      test_labels <- dataset$class[test_indices]
+
+      knn_model <- knn(train = train_data, test = test_data, cl = train_labels, k = k)
+
+      accuracy <- sum(knn_model == test_labels) / length(test_labels)
+      fold_accuracies <- c(fold_accuracies, accuracy)
+    }
+    avg_accuracy <- mean(fold_accuracies)
+    results <- rbind(results, data.frame(k = k, accuracy = avg_accuracy))
+  }
+
+  return(results)
+}
+
+# Run our function
+ks <- c(1, 3, 5, 7, 9, 11, 13, 15, 25, 49, 75, 99)
+
+# Run the cross validation function
+validation_data_frame_knn <- cross_knn(5, ks, data2, seed = 2024)
+
+# Print the top 5 best k values
+print(validation_data_frame_knn[order(-validation_data_frame_knn$accuracy), ][1:5, ])
+```
+
+We find that the best k value is 3 with an accuracy of 72.2%. I assume the k is so low because their is more correlation in the classification of the data points in certain directions at certain distances which makes the euclidean distance that KNN uses to classify (at least by default, although I won't be exploring other distance metrics in this example) not as useful, and therefore the model performs better looking at less neighbors. Now lets use this k value to classify the data and plot the decision boundary.
+
+```{r}
+# Use the best k value found from cross validation
+k <- 3
+
 # Use a KNN model to classify the data
-knn_model <- knn(train = data2[, c("x", "y")], test = data2[, c("x", "y")], cl = data2$class, k = 5)
+knn_model <- knn(train = data2[, c("x", "y")], test = data2[, c("x", "y")], cl = data2$class, k = k)
 
 # Convert knn_model to numeric
 knn_model <- as.numeric(knn_model)
@@ -585,11 +625,10 @@ knn_model <- as.numeric(knn_model)
 knn_model <- knn_model - 1
 
 # Create a confusion matrix to evaluate the model
-library(caret)
 confusionMatrix(as.factor(knn_model), data2$class)
 
 # Create the grid for the decision boundary
-predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid, cl = data2$class, k = 5)
+predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid, cl = data2$class, k = k)
 
 # Convert knn_model to numeric
 predicted_labels_knn <- as.numeric(predicted_labels_knn)
@@ -599,13 +638,16 @@ predicted_labels_knn <- predicted_labels_knn - 1
 
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn + 1], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
-This time the accuracy is quite good at 81.8% which is almost as good as the RBF kernel. However, the decision boundary doesn't look quite as good as the RBF kernel and struggles to keep a consistent width throughout the decision boundary. It also has some strange gaps similar to the RBF kernel. Let's see how it does on the test data just to be sure.
+This time the accuracy is quite good at 85.7% which is even better than the cross validated RBF kernel. I do think it has an unfair advantage in this category though since it can use the classification of itself as a neighbor to make a decision. This means if k = 1, the model would have 100% accuracy on the training set as it would only look at it's own classification. The decision boundary is also looks quite good although it seems to have a harder time keeping a consistent width compared to the RBF SVM model. The results from the cross validation are also not as good as the RBF kernel, so lets see how it does on the test data to make a final conclusion.
+
 
 ```{r}
 # Create a confusion matrix to evaluate the KNN model
-knn_model_test <- knn(train = data2[, c("x", "y")], test = test_data2[, c("x", "y")], cl = data2$class, k = 5)
+knn_model_test <- knn(train = data2[, c("x", "y")], test = test_data2[, c("x", "y")], cl = data2$class, k = k)
 
 # Convert knn_model to numeric
 knn_model_test <- as.numeric(knn_model_test)
@@ -614,43 +656,207 @@ knn_model_test <- as.numeric(knn_model_test)
 knn_model_test <- knn_model_test - 1
 
 # Create a confusion matrix to evaluate the model
-library(caret)
 confusionMatrix(as.factor(knn_model_test), test_data2$class)
 ```
 
 - Potential TODO: Try a naive bayes model on this data. - Kellen Nankervis
 
-On the test data the KNN model gets an accuracy of 72.2% which is a bit lower than the 75.6% the RBF kernel got. This is likely due to the decision boundary not being as good as the RBF kernel. Still this would be a reasonable candidate for a model to use on this data, especially since we do not need to run cross-validation to find the best parameters for the model. If we want the very best fit however, the RBF kernel with parameters picked through cross-validation would be the best choice.
+On the test data the KNN model gets an accuracy of 72.6% which is a bit lower than the 75.6% the RBF kernel got. This is likely due to the decision boundary not being as good as the RBF kernel. It also shows the the KNN model had more variance, and less bias then the RBF SVM, since it did better on classifying the training data, but worse on classifying the testing data. I do think this is somewhat of an unfair fight though, since on the training data the KNN model can use it's very own point as a neighbor, meaning it already knows the correct classification for at least that point. When there are only 3 neighbors this can have a big impact on the classification. Overall I would say the RBF kernel is the best model for this data since it did the best at classifying the test data and had the best decision boundary. The KNN model was a close second though.
 
-- TODO: Work on 2's and 7's example. - Kellen Nankervis
+- TODO: Review the 2's and 7's section to make sure it is clear and concise. - Kellen Nankervis
 
-- TODO: Write final conclusion. - Kellen Nankervis
+## Real Data Set
 
-- Example of how to plot I found online. Should be removed for final paper but I thought it might be helpful to look at. - Kellen Nankervis
+Now that we have demonstrated the power of the RBF kernel on a generated data set, we will now demonstrate the power of the RBF kernel on a real data set. We will use the famous MNIST data set which contains images of handwritten digits. We will only use the 2's and 7's from the data set since they are the most similar and thus the most difficult to classify. We will use the same process as before to classify the data and plot the decision boundary. This dataset is also nice since it is a good example of where an RBF kernel would be useful since the decision boundary is not linear, and can also be graphed in 2 dimensions.
+
+x_1 is the proportion of dark pixels in the upper-left quadrant, x_2 is the proportion of dark pixels in the lower-right quadrant, and y is the true classification for the digit (2 or 7).
+
 ```{r}
-print("")
+# Load the required libraries
+library(MASS)
+library(caret)
+library(e1071)
+library(dslabs)
+library(tidyverse)
 
-# Create a toy dataset
-set.seed(123)
-data <- data.frame(
-  x1 = rnorm(50, mean = 2),
-  x2 = rnorm(50, mean = 2),
-  label = c(rep("Red", 25), rep("Blue", 25)) |> as.factor()
-)
+# Load the MNIST data set
+data("mnist_27")
 
-# Train an SVM
-svm_model <- svm(label ~ ., data = data, kernel = "radial")
+# Plot the test data to get an overview of the data, name the axes, and add a title
+ggplot(mnist_27$test, aes(x = x_1, y = x_2, color = as.factor(y), shape = as.factor(y))) +
+  geom_point() +
+  xlab("Proportion of dark pixels in the upper-left quadrant") +
+  ylab("Proportion of dark pixels in the lower-right quadrant") +
+  ggtitle("MNIST Data Set") +
+  labs(color = "Digit", shape = "Digit") +
+  theme_minimal()
+```
+
+We can see from plotting the test data that the 2's and 7's are quite similar and thus will be difficult to classify. The sevens tend to be a bit more in the lower left corner meaning more of the pixels in the upper left are dark, and the twos tend to be a bit more in the upper right corner meaning slightly more of the pixels in the lower right are dark. This is a good example of where a linear kernel would not work well since the decision boundary is not linear.
+
+First let's try fitting a linear kernel to the data just to get a baseline, from here all the code will use the training data until we return to see how it does on the test data.
+
+```{r}
+# Fit a linear kernel to the data
+svmfit_linear_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "linear", cost = 1000)
+
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit_linear_mnist, mnist_27$train), mnist_27$train$y)
 
 # Create a grid of points for prediction
-x1_grid <- seq(min(data$x1), max(data$x1), length.out = 100)
-x2_grid <- seq(min(data$x2), max(data$x2), length.out = 100)
-grid <- expand.grid(x1 = x1_grid, x2 = x2_grid)
+x1_grid <- seq(min(mnist_27$train$x_1), max(mnist_27$train$x_1), length.out = 100)
+x2_grid <- seq(min(mnist_27$train$x_2), max(mnist_27$train$x_2), length.out = 100)
+grid <- expand.grid(x_1 = x1_grid, x_2 = x2_grid)
 
-# Predict class labels for the grid
-predicted_labels <- predict(svm_model, newdata = grid)
+predicted_labels_linear_mnist <- predict(svmfit_linear_mnist, newdata = grid)
+
+# Plot the decision boundary (use a base r plot since this is a rare instance where ggplot2 doesn't work well)
+plot(grid$x_1, grid$x_2, col = boundary_colors[predicted_labels_linear_mnist], pch = ".", cex = 3.5, xlab = "Proportion of dark pixels in the upper-left quadrant", ylab = "Proportion of dark pixels in the lower-right quadrant")
+points(mnist_27$train$x_1, mnist_27$train$x_2, col = point_colors[mnist_27$train$y], pch = 19)
+```
+
+We can see that our linear kernal does not quite do the job, it's accuracy of 78.88% is impressive, but not as good as we would like, but it gives us a good baseline to compare the other models to. Now let's try the RBF kernel.
+
+```{r}
+# Use a radial basis function kernel to classify the data with the SVM function
+svmfit_rbf_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "radial", cost = 1, gamma = 1)
+
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit_rbf_mnist, mnist_27$train), mnist_27$train$y)
+
+predicted_labels_rbf_mnist <- predict(svmfit_rbf_mnist, newdata = grid)
 
 # Plot the decision boundary
-plot(data$x1, data$x2, col = factor(data$label), pch = 19, main = "SVM Decision Boundary")
-points(grid$x1, grid$x2, col = factor(predicted_labels), pch = ".", cex = 2.5)
-legend("topright", legend = levels(data$label), col = c("blue", "red"), pch = 19)
+plot(grid$x_1, grid$x_2, col = boundary_colors[predicted_labels_rbf_mnist], pch = ".", cex = 3.5, xlab = "Proportion of dark pixels in the upper-left quadrant", ylab = "Proportion of dark pixels in the lower-right quadrant")
+points(mnist_27$train$x_1, mnist_27$train$x_2, col = point_colors[mnist_27$train$y], pch = 19)
 ```
+
+Even with the default values of cost and gamma the RBF kernel seems to do a better job of classifying the data than the linear kernel. The accuracy of 83.38% is better than the linear kernel, but still not as good as we would like. The decision boundary also looks better than the linear kernel, seeming to follow the data better without overfitting. Now let's try to find the best values for cost and gamma using cross validation.
+
+```{r}
+# Convert to a matrix with the proper column names
+training_matrix <- as.data.frame(mnist_27$train)
+colnames(training_matrix) <- c("class", "x_1", "x_2")
+training_matrix$class <- as.factor(training_matrix$class)
+
+# Run our cross validation function
+validation_data_frame_mnist <- cross_validate(10, c(0.1, 1, 10, 100, 1000), c(0.01, 0.1, 1, 10, 100), training_matrix, seed = 2024)
+
+# Print the top 5 best cost and gamma values
+print(validation_data_frame_mnist[order(-validation_data_frame_mnist$accuracy), ][1:5, ])
+```
+
+From this we see that lowering the cost down to 0.1 and keeping ht gamma at 1 seems to do the best at predicting new unseen data getting an accuracy of 83.375% on the test folds. Let's use this to train a new model and see how the decision boundary and confusion matrix change as a result.
+
+```{r}
+# Use the best cost and gamma values to classify the data
+svmfit_best_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "radial", cost = 0.1, gamma = 1)
+
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit_best_mnist, mnist_27$train), mnist_27$train$y)
+
+predicted_labels_best_mnist <- predict(svmfit_best_mnist, newdata = grid)
+
+# Plot the decision boundary
+plot(grid$x_1, grid$x_2, col = boundary_colors[predicted_labels_best_mnist], pch = ".", cex = 3.5, xlab = "Proportion of dark pixels in the upper-left quadrant", ylab = "Proportion of dark pixels in the lower-right quadrant")
+points(mnist_27$train$x_1, mnist_27$train$x_2, col = point_colors[mnist_27$train$y], pch = 19)
+```
+
+I don't see much of a difference between the two decision boundaries and the accuracy has only increased to 83.88%, an improvement by 0.5%, it seems to only reclassify the bottom left corner of the data from 2's to 7's and slightly pull in the amount of area classified as twos along the edge causing more points to be classified as 7's overall. I do trust in the power of cross validation though so I will trust that this model is better than the default model. Now let's see how it does on the test data.
+
+```{r}
+# Create a confusion matrix to evaluate the SVM model
+confusionMatrix(predict(svmfit_best_mnist, mnist_27$test), mnist_27$test$y)
+```
+
+We can see that on the test data which was 20% of the whole data set the model got an accuracy of 83.5% which is basically the same as the training. This means we have found a good model that generalizes well to new data and also did well on it's own training data. This means we have found a good mix of bias and variance in our model.
+
+From the example dataset we know that k-Nearst Neighbors also does well on these types of data sets so let's see how it does on this data set to make comparisons and see if we have found the best model.
+
+```{r}
+# Create a list of k values to try
+ks <- seq(1, 300, by = 2)
+
+# Create a matrix with the proper column names
+training_matrix <- as.data.frame(mnist_27$train)
+colnames(training_matrix) <- c("class", "x", "y")
+
+# Run the cross validation function
+validation_data_frame_knn_mnist <- cross_knn(10, ks, training_matrix, seed = 2024)
+
+# Print the top 5 best k values
+print(validation_data_frame_knn_mnist[order(-validation_data_frame_knn_mnist$accuracy), ][1:5, ])
+```
+
+From the cross validation we see that a k value of 89 is the best value for this data set with an accuracy of 83.38% on the test folds. Let's use this k value to classify the data and plot the decision boundary.
+
+```{r}
+# Use the best k value found from cross validation
+k <- 89
+
+# Use a KNN model to classify the data
+knn_model_mnist <- knn(train = training_matrix[, c("x", "y")], test = training_matrix[, c("x", "y")], cl = training_matrix$class, k = k)
+
+# Convert knn_model to numeric
+knn_model_mnist <- as.numeric(knn_model_mnist)
+
+# Convert 1s to 2s and 2s to 7s
+knn_model_mnist <- ifelse(knn_model_mnist == 1, 2, 7)
+
+# Create a confusion matrix to evaluate the model
+confusionMatrix(as.factor(knn_model_mnist), training_matrix$class)
+
+# Create the grid for the decision boundary
+x1_grid <- seq(min(training_matrix$x), max(training_matrix$x), length.out = 100)
+x2_grid <- seq(min(training_matrix$y), max(training_matrix$y), length.out = 100)
+
+grid <- expand.grid(x = x1_grid, y = x2_grid)
+
+predicted_labels_knn_mnist <- knn(train = training_matrix[, c("x", "y")], test = grid, cl = training_matrix$class, k = k)
+
+# Convert knn_model to numeric
+predicted_labels_knn_mnist <- as.numeric(predicted_labels_knn_mnist)
+
+# Plot the decision boundary
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn_mnist], pch = ".", cex = 3.5, xlab = "Proportion of dark pixels in the upper-left quadrant", ylab = "Proportion of dark pixels in the lower-right quadrant")
+points(training_matrix$x, training_matrix$y, col = point_colors[training_matrix$class], pch = 19)
+```
+
+This decision boundary looks similar to the one the RBF kernel produced, with the default values of cost and gamma, and the accuracy is the exact same at 83.38%. It seems that this decision boundary just slightly predicts more 2's than the RBF kernel, but overall they are very similar. Now let's see how it does on the test data so we can make a final conclusion.
+
+```{r}
+# Put the test data into a data frame with the right column names
+mnist_27_test <- as.data.frame(mnist_27$test)
+colnames(mnist_27_test) <- c("class", "x", "y")
+
+# Create a confusion matrix to evaluate the KNN model
+knn_model_test_mnist <- knn(train = training_matrix[, c("x", "y")], test = mnist_27_test[, c("x", "y")], cl = training_matrix$class, k = k)
+
+# Convert knn_model to numeric
+knn_model_test_mnist <- as.numeric(knn_model_test_mnist)
+
+# Convert 1s to 2s and 2s to 7s
+knn_model_test_mnist <- ifelse(knn_model_test_mnist == 1, 2, 7)
+
+# Create a confusion matrix to evaluate the model
+confusionMatrix(as.factor(knn_model_test_mnist), mnist_27_test$class)
+
+# Plot the decision boundary
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn_mnist], pch = ".", cex = 3.5, xlab = "Proportion of dark pixels in the upper-left quadrant", ylab = "Proportion of dark pixels in the lower-right quadrant")
+
+# Plot the data points
+points(mnist_27_test$x, mnist_27_test$y, col = point_colors[mnist_27_test$class], pch = 19)
+
+# Add a legend
+legend("topright", legend = levels(mnist_27_test$class), col = point_colors, pch = 19)
+```
+
+On the training data the KNN model got an accuracy of 82% which means it predicts worse by 1.5% than the RBF kernel which is equivelent to 3 more misclassifications. This means that the RBF kernel has again done the best job at classifying the data, this time both on the training and test data even if only by a small margin. This again shows the power of the RBF kernel on non-linear data sets for classification.
+
+- Potential TODO: Attempt classification on the full MNIST data set. - Kellen Nankervis
+
+- TODO: Fill out the conclusion a bit more, perhaps add more about the math behind the RBF kernel or just explain the results more. - Kellen Nankervis
+
+## Conclusion
+
+From the examples of the generated data set and the MNIST data set we can see that the RBF kernel is a powerful tool for classifying non-linear data sets. It was able to classify the generated data of the spiral with a decision boundary very close to the true decision boundary and an accuracy of 75.6% on the test data. This was better than the linear kernel, polynomial kernel, logistic regression model, and KNN model. It was also able to classify the MNIST data set of 2's and 7's with an accuracy of 83.5% on the test data. The KNN model was a close second with an accuracy of 82% on the test data. One downside of the RBF kernel is that it is computationally expensive and can take a long time to train on large data sets. It is also crucial to perform cross validation to find the best values for cost and gamma since the default values are not always the best which further increases the computational cost. However once the model is trained it is very fast at classifying new data points and does a great job at generalizing to new data assuming the chosen parameters are good. Overall the RBF kernel in support vector machines is a great tool for classifying non-linear data sets and a tool every data scientist should have in their toolbox.
