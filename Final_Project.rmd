@@ -34,7 +34,7 @@ As we discussed in notes 11 suport vector machines are a powerful tool for class
 
 In Notes 11, we explored Support Vector Machines, or SVMs, which are highly powerful classifiers. To put it briefly, they work by finding a linear hyperplane which maximizes the margin between two classes, called the decision boundary. But what happens if our data are not linearly separable and therefore a linear decision boundary cannot be formed? We can use a kernel trick, which allows us to transform the data into a higher dimension, becoming linearly separable. The RBF kernel trick calculates the dot product of the transformed data without having to actually transform the data. In this project, we will further explore how we can manipulate data in ways that allow us to use the SVM algorithm on non linear data. 
 
-Non-linear decision boundary:
+Consider the following non-linearly separable data:
 ```{python, echo=F, cache=T}
 import matplotlib
 import matplotlib.pyplot as plt
@@ -131,13 +131,18 @@ def poly_kernel(p):
     return lambda A, B: (A @ B.T + 1 ) ** p
 ```
 
-SVM epic fail:
+In this case, the best SVM can do is classify everything as the majority class (purple).
+
 ```{python, echo=F, cache=T}
 plot_with_boundary("linear")
 ```
 
+There are some workarounds by using other **Kernels**. But, in order to understand what a Kernel is, we need to dive into the math for SVMs. 
+
+Disclaimer: For the math sections we'll be focusing on the hard margin case as it's easier to follow. Nonetheless, the insights we gain will also apply to the soft margin case.
 
 ## Dual Problem
+
 For the Support Vector Machine algorithm, our goal is to find a $\beta$ and $c$ under the following optimization objective:
 \begin{align*}
 \underset{\boldsymbol{\beta}, c}{\text{minimize }} & \Vert\boldsymbol{\beta}\Vert^2_2\\
@@ -250,6 +255,8 @@ $$
 
 and $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = \phi_{Power(2)}(\boldsymbol{a}) \cdot \phi_{Power(2)}(\boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$. However, notice we don't have to compute $\phi_{Power(2)}$ if we take $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$ instead.
 
+Applying this kernel on our data clearly results in a better classification, although not quite perfect:
+
 ```{python, echo=F, cache=T}
 plot_with_boundary(power_kernel(2), "Power(2)")
 ```
@@ -262,29 +269,38 @@ K_{Power(4)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymb
 K_{Power(n)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^n \text{ corresponds to the transformation containing all n-way interaction terms}
 \end{align*}
 
+Similarly, we can try these Kernels on our data.
+
 ```{python, echo=F, cache=T}
 for i in range(3,6+1):
   plot_with_boundary(power_kernel(i), f"Power({i})")
 ```
 
+Like the base Kernel, the odd-power Kernels suck at classifying the data, while even power kernels do a fantastic job, specially after 4. It's also important to note that weird boundaries arise when our Kernel degree gets higher.
+
 ```{python, echo=F, cache=T}
 plot_with_boundary(power_kernel(50), "Power(50)")
 ```
 
-However, in Applied Statistics we learned that whenever we include high order terms, we also want to include all lower level terms. So, let's inspect the following kernel:
+However, as we learned in Applied Statistics, whenever we include high order terms, we also want to include all lower level terms. So, let's inspect the following kernel:
 
 $K_{Poly(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^2 = \underset{\text{2-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^2} + \underset{\text{1-way}}{2(\boldsymbol{a} \cdot \boldsymbol{b})} + \underset{\text{0-way}}{1}$ 
 
-So, $K_{Poly(2)}$ gives us the 2-way interaction terms and all the lower order terms. Likewise,  $K_{Poly(n)}= (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^n$ gives us the n-way interaction terms and below, precisely what we wanted. This is also the polynomial kernel for SVM with $\gamma$ = 1.
+So, $K_{Poly(2)}$ gives us the 2-way interaction terms and all the lower order terms. Likewise,  $K_{Poly(n)}= (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^n$ gives us the n-way interaction terms and below, precisely what we wanted. This is also the polynomial kernel for SVM with $\gamma$ = 1. After trying $K_{Poly(2)}$ on our data, we get a similar plot to the one produced by $K_{Power(2)}$:
 
 ```{python, echo=F, cache=T}
 plot_with_boundary(poly_kernel(2), "Poly(2)")
 ```
 
+And when we run it with higher degree Kernels, we can observe that the even-degree Kernels look very similar. However, the odd degrees Kernels can in fact classify the data efficiently as they also "include" even-degree terms.
+
 ```{python, echo=F, cache=T}
 for i in range(3,6+1):
   plot_with_boundary(poly_kernel(i), f"Poly({i})")
 ```
+
+Once again, we get weirness as our Kernel degree gets higher.
+
 ```{python, echo=F, cache=T}
 plot_with_boundary(poly_kernel(50), "Poly(50)")
 ```
@@ -307,7 +323,7 @@ $\operatorname{exp}(\boldsymbol{a} \cdot \boldsymbol{b}) = \underset{\text{0-way
 
 Which gives us ALL n-way interaction terms, weighing the lower terms more and the higher terms less. This also means we're essentially computing the dot product of an infinite-dimensional transformation, without having to compute infinite transformations. However, to get to the Radial Basis Function, we need a couple transformations:
 
-First, let's multiply it by $\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right)$:
+In practice, any SVM algorithm normalizes the data before performing the classification. So, let's multiply our kernel by $\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right)$. That way, outliers or observations that deviate a lot contribute less to our model.
 
 \begin{align*}
 \operatorname{exp}\Big(\boldsymbol{a} \cdot \boldsymbol{b}\Big)\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right) &= 
@@ -316,7 +332,8 @@ First, let's multiply it by $\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}
 &= \operatorname{exp}\left(-\dfrac{1}{2}\Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\right)
 \end{align*}
 
-Now, let's raise it to the $2\gamma$ to add a control parameter.
+
+Now, let's raise it to the $2\gamma$ to add a control parameter. The control parameter adjusts for the importance of higher order terms. The higher it is, the more relevant they become.
 
 $\left(\operatorname{exp}\left(-\dfrac{1}{2}\Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\right)\right)^{2\gamma} = \operatorname{exp}\Big(-\gamma \Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\Big)$
 
@@ -325,24 +342,30 @@ Finally, we have arrived to the Radial Basis Function Kernel:
 
 $K_{RBF}(\boldsymbol{a}, \boldsymbol{b}) = \operatorname{exp}\Big(-\gamma \Vert\boldsymbol{a}-\boldsymbol{b}\Vert^2_2\Big)$
 
-In essence RBF is so special because it performs the optimization over an infinite-dimensional feature space. All that with a really simple formula, which allows for very intricate decision boundaries with minimal computational power.
+After running the SVM with the RBF kernel, we get pretty nice non-linear decision boundaries. 
 
 ```{python, echo=F, cache=T}
 plot_with_boundary("rbf")
 ```
 
+Observe that the "majority class" becomes the "background", while the "minority class" creates some "splodges" across the plane.
+
+In essence RBF is so special because it performs the optimization over an infinite-dimensional feature space. All that with a really simple formula, which allows for very intricate decision boundaries with minimal computational power.
+
+
+
 # Strengths and Weaknesses
 Strengths:
-1. RBFs are able to perform optimization over an n-dimensional space using a relatively simple formula, making them computationally inexpensive while still having a lot of power. 
+1. RBFs are able to perform optimization over an $\infty$-dimensional space using a relatively simple formula, making them computationally inexpensive while still having a lot of power. 
 
 2. There are no preassumptions that need to be made about the data, making it a great tool when the distribution of data is not known. 
 
 3. RBF decisions are local ones, making it a more robust algorithm that is not sensitive to outliers, in comparison to some other kernels. 
 
-4. The hyperparameter $\gamma$ and the cost parameter allow us to be more flexible about model specificity. 
+4. The hyperparameter $\gamma$ and the cost parameter (soft margin case) allow us to be more flexible about model specificity. 
 
 Weaknesses: 
-1. RBFs are non probablistic, meaning points are only classified as being in one class or the other. We cannot adjust the probability cutoff for classifying points like we might in logistic regression. 
+1. RBFs are non probablistic, meaning points are only classified as being in one class or the other. We cannot adjust the probability cutoff for classifying points like we might in logistic regression. However, We *can* FORCE a probabilistic model by fitting a logistic regression around the RBF model.
 
 2. Like SVMs, we do not get easily interpretable coefficients. So, it becomes difficult to assess the influence of a specific variable on classification.
 
@@ -453,8 +476,7 @@ grid <- expand.grid(x = x1_grid, y = x2_grid)
 
 predicted_labels <- predict(svmfit, newdata = grid)
 
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels],
- pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 
 # Plot the data points
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
@@ -465,8 +487,7 @@ If we just want to plot the decision boundary we can use the following code.
 
 ```{r}
 # Plot the decision boundary
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels],
- pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
 
@@ -485,12 +506,10 @@ cross_validate <- function(folds, costs, gammas, data, seed) {
       set.seed(seed)
 
       # Use cross-validation to find the best cost and gamma values
-      svm_cross <- svm(class ~ ., data = data, kernel = "radial",
-       cross = folds, cost = cost, gamma = gamma)
+      svm_cross <- svm(class ~ ., data = data, kernel = "radial", cross = folds, cost = cost, gamma = gamma)
 
       # Store the results
-      results <- rbind(results, data.frame(cost = cost, gamma = gamma,
-       accuracy = svm_cross$tot.accuracy))
+      results <- rbind(results, data.frame(cost = cost, gamma = gamma, accuracy = svm_cross$tot.accuracy))
     }
   }
 
@@ -506,8 +525,7 @@ simpler_cm <- function(cm.out) {
 
 ```{r}
 # Run our function
-validation_data_frame <- cross_validate(5, c(0.1, 1, 10, 100, 1000),
- c(0.01, 0.1, 1, 10, 100), data2, seed = 2024)
+validation_data_frame <- cross_validate(5, c(0.1, 1, 10, 100, 1000), c(0.01, 0.1, 1, 10, 100), data2, seed = 2024)
 
 # Print the top 5 best cost and gamma values
 print(validation_data_frame[order(-validation_data_frame$accuracy), ][1:5, ])
@@ -576,8 +594,7 @@ for (j in 1:n) {
   new_r[j] <- sqrt(test_data2$x[j]^2 + test_data2$y[j]^2)
   new_theta[j] <- atan2(test_data2$y[j], test_data2$x[j])
 
-  ifelse(new_theta[j] < 0, new_theta[j] <- new_theta[j] + 2 * pi, 
-   new_theta[j] <- new_theta[j])
+  ifelse(new_theta[j] < 0, new_theta[j] <- new_theta[j] + 2 * pi, new_theta[j] <- new_theta[j])
 
   # Classify observations based on r and theta
   post_offset_class[j] <- ifelse((new_r[j] + new_theta[j]) %% (2 * pi) < pi, 1, 0)
@@ -644,8 +661,7 @@ confusionMatrix(predict(svmfit_linear, data2), data2$class) |> simpler_cm()
 
 predicted_labels_linear <- predict(svmfit_linear, newdata = grid)
 
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".",
- cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 
 # Plot the data points
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
@@ -665,6 +681,7 @@ cross_poly <- function(folds, degrees, costs, gammas, dataset, seed) {
     for (cost in costs) {
       for (gamma in gammas) {
         set.seed(seed)
+        print(iteration)
         iteration <- iteration + 1
         svm_cross <- svm(class ~ ., data = dataset, kernel = "polynomial", degree = degree, cross = folds, cost = cost, gamma = gamma)
 
@@ -681,25 +698,23 @@ degrees <- c(4, 5, 6)
 costs <- c(1, 10, 100)
 gammas <- c(0.1, 1, 10)
 
-# Running this code will take awhile to run, to speed it up we will only use 2 folds
-validation_data_frame_poly <- cross_poly(2, degrees, costs, gammas, data2, seed = 2024)
+# Running this code will take awhile, maybe uncomment it when knitting the pdf for the final time.
+#validation_data_frame_poly <- cross_poly(2, degrees, costs, gammas, data2, seed = 2024)
 
 # Print the top 5 best degree, cost, and gamma values
-print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy),][1:5, ])
+# print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy), ][1:5, ])
 ```
 
 ```{r}
 # Make the best poly model based on the cross validation
-svm_poly <- svm(class ~ ., data = data2, kernel = "polynomial", degree = 5,
- cost = 10, gamma = 0.1)
+svm_poly <- svm(class ~ ., data = data2, kernel = "polynomial", degree = 5, cost = 10, gamma = 0.1)
 
 # Check the svm_poly model on a confusion matrix
 confusionMatrix(predict(svm_poly, data2), data2$class) |> simpler_cm()
 
 predicted_labels_poly <- predict(svm_poly, newdata = grid)
 
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_poly], pch = ".", cex = 3.5,
- xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_poly], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
@@ -718,13 +733,11 @@ predicted_probabilities <- predict(logit_model, type = "response")
 predicted_probabilities <- ifelse(predicted_probabilities > 0.5, 1, 0)
 
 # Create a confusion matrix to evaluate the model
-confusionMatrix(as.factor(predicted_probabilities),
- as.factor(data2$class)) |> simpler_cm()
+confusionMatrix(as.factor(predicted_probabilities), as.factor(data2$class)) |> simpler_cm()
 
 # Plot the decision boundary
 predicted_labels_logit <- predicted_probabilities > 0.5
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_logit + 1], pch = ".",
- cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_logit + 1], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 ```
 
 As we can see from the decision boundary this model isn't very good at classifying the data, only getting an accuracy of 54.4%. This is better than the linear kernel, but still not very good, and looking at the decision boundary we can clearly see that it is no where close to the true decision boundary.
@@ -785,8 +798,7 @@ We find that the best k value is 3 with an accuracy of 72.2%. I assume the k is 
 k <- 3
 
 # Use a KNN model to classify the data
-knn_model <- knn(train = data2[, c("x", "y")], test = data2[, c("x", "y")],
- cl = data2$class, k = k)
+knn_model <- knn(train = data2[, c("x", "y")], test = data2[, c("x", "y")], cl = data2$class, k = k)
 
 # Convert knn_model to numeric
 knn_model <- as.numeric(knn_model)
@@ -798,8 +810,7 @@ knn_model <- knn_model - 1
 confusionMatrix(as.factor(knn_model), data2$class) |> simpler_cm()
 
 # Create the grid for the decision boundary
-predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid,
- cl = data2$class, k = k)
+predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid, cl = data2$class, k = k)
 ```
 ```{r, echo=FALSE}
 # Convert knn_model to numeric
@@ -810,8 +821,7 @@ predicted_labels_knn <- predicted_labels_knn - 1
 ```
 ```{r}
 # Plot the decision boundary
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn + 1], pch = ".",
- cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn + 1], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
