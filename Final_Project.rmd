@@ -33,13 +33,13 @@ urlcolor: blue
 - TODO: Add more text to the introduction. - Kellen Nankervis
 
 As we discussed in notes 11 suport vector machines are a powerful tool for classification. They work by finding the hyperplane that maximizes the margin between the two classes. The kernel trick is a way to transform the data into a higher dimensional space where the data becomes linearly separable. This is done by using a kernel function to calculate the dot product of the transformed data without actually transforming the data. This allows us to use the SVM algorithm to classify data that is not linearly separable in the original space. In this project we will explore the radial basis function kernel and how it is an extremely powerful tool for classifying data that could not be classified with a linear kernel or other data with a extremely curved decision boundary.
-```{r}
-reticulate::py_install("sklearn")
-```
 
 Non-linear decision boundary:
 ```{python, echo=F, cache=T}
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use('Agg')
+import matplotlib.colors as clr
 import numpy as np
 
 template = np.array(
