@@ -205,7 +205,7 @@ In essence RBF is so special because it performs the optimization over an infini
 
 
 ## Example Data
-- TODO: Fix colors so they are the same as the later plot. Add some more surrounding text to the whole example portion. - Kellen Nankervis
+- TODO: Maybe make the plots look nicer if we can. Add some more surrounding text to the whole example portion. - Kellen Nankervis
 To show the power of the Radial Basis Function we will first use a generated data set.
 
 Before we get started let's briefly discuss the cost and gamma parameters. The cost parameter is the cost of misclassifying a data point. A higher cost will lead to a more complex model that will try to classify all data points correctly. It trades off misclassification of training examples against increasing the margin. Larger values of cost will lead to a smaller margin. In this way cost behaves as a regularization parameter. The gamma parameter controls how far the influence of a single training example reaches. A low gamma will consider points far away from the decision boundary in calculations, while a high gamma will consider only points close to the decision boundary. The gamma parameters can be seen as the inverse of the radius of influence of samples selected by the model as support vectors.
@@ -258,19 +258,13 @@ generate_spiral <- function(n, r, r_offset, colors, seed) {
 data <- generate_spiral(n, r, r_offset, colors, seed = 2024)
 ```
 
-- TODO: Decide which plots to show and which to delete. Commented out ones would be my current suggestions to delete or at least move to later in the document. Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
+- TODO: Make plots look good when knitted to pdf and/or slides. - Kellen Nankervis
 
 Now lets take a look at this generated data.
 
 ```{r}
 # Plot the data in the x and y coordinates
 plot(data$x, data$y, col = data$color, pch = 19, xlab = "x", ylab = "y")
-
-# Plot the data in polar coordinates
-# plot(data$r, data$theta, col = data$color, pch = 19, xlab = "r", ylab = "theta")
-
-# Plot r*theta vs. r^2 * theta^2
-# plot(data$r + data$theta, data$r * data$theta, col = data$color, pch = 19, xlab = "r*theta", ylab = "r^2 * theta^2")
 ```
 
 As we can see it matches a spiral pattern with a bit of overlap between the two classes. Since we know how the data was genreated it might be smart to convert to polar coordinates, but if this data weren't generated we might not make that connection. This is where the RBF kernel can be very useful.
@@ -323,17 +317,8 @@ points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
 
-- If we want to plot the decision boundary above the points we can use the following code. - Kellen Nankervis
-```{r}
-# Plot the data points
-plot(data2$x, data2$y, col = point_colors[data2$class], pch = 19, xlab = "x", ylab = "y")
+To just plot the decision boundary we can use the following code.
 
-# Plot the decision boundary
-points(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5)
-legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
-```
-
-- Or to just plot the decision boundary we can use the following code. - Kellen Nankervis
 ```{r}
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
@@ -391,7 +376,9 @@ plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".", ce
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
-- Or to just plot the decision boundary which I think is my preferred method right now. - Kellen Nankervis
+
+Let's look at just the decision boundary.
+
 ```{r}
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
@@ -499,6 +486,9 @@ confusionMatrix(predict(svmfit_linear, data2), data2$class)
 predicted_labels_linear <- predict(svmfit_linear, newdata = grid)
 
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+
+# Plot the data points
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
 As we can see the linear kernel does not do a good job at classifying the data only getting a 51.5% accuracy (only slightly better than guessing) since no line cleanly fits the data. So lets try the polynomial kernel.
@@ -547,6 +537,8 @@ confusionMatrix(predict(svm_poly, data2), data2$class)
 predicted_labels_poly <- predict(svm_poly, newdata = grid)
 
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_poly], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
 We can see that the very best polynomial kernel from our cross validation only gets an accuracy of 51.1% which is not very good, in fact it is worse than the linear kernel or just guessing the more likely (at least based on the test data) classification every time. 
@@ -650,6 +642,8 @@ predicted_labels_knn <- predicted_labels_knn - 1
 
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn + 1], pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
 This time the accuracy is quite good at 85.7% which is even better than the cross validated RBF kernel. I do think it has an unfair advantage in this category though since it can use the classification of itself as a neighbor to make a decision. This means if k = 1, the model would have 100% accuracy on the training set as it would only look at it's own classification. The decision boundary is also looks quite good although it seems to have a harder time keeping a consistent width compared to the RBF SVM model. The results from the cross validation are also not as good as the RBF kernel, so lets see how it does on the test data to make a final conclusion.
@@ -673,7 +667,7 @@ confusionMatrix(as.factor(knn_model_test), test_data2$class)
 
 On the test data the KNN model gets an accuracy of 72.6% which is a bit lower than the 75.6% the RBF kernel got. This is likely due to the decision boundary not being as good as the RBF kernel. It also shows the the KNN model had more variance, and less bias then the RBF SVM, since it did better on classifying the training data, but worse on classifying the testing data. I do think this is somewhat of an unfair fight though, since on the training data the KNN model can use it's very own point as a neighbor, meaning it already knows the correct classification for at least that point. When there are only 3 neighbors this can have a big impact on the classification. Overall I would say the RBF kernel is the best model for this data since it did the best at classifying the test data and had the best decision boundary. The KNN model was a close second though.
 
-- TODO: Work on 2's and 7's example. - Kellen Nankervis
+- TODO: Review the 2's and 7's section to make sure it is clear and concise. - Kellen Nankervis
 
 ## Real Data Set
 
