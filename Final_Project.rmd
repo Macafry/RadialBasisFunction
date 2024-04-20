@@ -682,12 +682,10 @@ costs <- c(1, 10, 100)
 gammas <- c(0.1, 1, 10)
 
 # Running this code will take awhile to run, to speed it up we will only use 2 folds
-#validation_data_frame_poly <- cross_poly(2, degrees, costs,
-# gammas, data2, seed = 2024)
+validation_data_frame_poly <- cross_poly(2, degrees, costs, gammas, data2, seed = 2024)
 
 # Print the top 5 best degree, cost, and gamma values
-#print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy),
-# ][1:5, ])
+print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy),][1:5, ])
 ```
 
 ```{r}
