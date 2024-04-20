@@ -28,12 +28,6 @@ editor_options:
 urlcolor: blue
 ---
 
-Hello World!
-
-```{r}
-print("Hello world!")
-```
-
 ## Introduction
 
 - TODO: Add more text to the introduction. - Kellen Nankervis
@@ -866,32 +860,3 @@ On the training data the KNN model got an accuracy of 82% which means it predict
 ## Conclusion
 
 From the examples of the generated data set and the MNIST data set we can see that the RBF kernel is a powerful tool for classifying non-linear data sets. It was able to classify the generated data of the spiral with a decision boundary very close to the true decision boundary and an accuracy of 75.6% on the test data. This was better than the linear kernel, polynomial kernel, logistic regression model, and KNN model. It was also able to classify the MNIST data set of 2's and 7's with an accuracy of 83.5% on the test data. The KNN model was a close second with an accuracy of 82% on the test data. One downside of the RBF kernel is that it is computationally expensive and can take a long time to train on large data sets. It is also crucial to perform cross validation to find the best values for cost and gamma since the default values are not always the best which further increases the computational cost. However once the model is trained it is very fast at classifying new data points and does a great job at generalizing to new data assuming the chosen parameters are good. Overall the RBF kernel in support vector machines is a great tool for classifying non-linear data sets and a tool every data scientist should have in their toolbox.
-
-- Example of how to plot I found online. Should be removed for final paper but I thought it might be helpful to look at. - Kellen Nankervis
-```{r}
-print("")
-
-# Create a toy dataset
-set.seed(123)
-data <- data.frame(
-  x1 = rnorm(50, mean = 2),
-  x2 = rnorm(50, mean = 2),
-  label = c(rep("Red", 25), rep("Blue", 25)) |> as.factor()
-)
-
-# Train an SVM
-svm_model <- svm(label ~ ., data = data, kernel = "radial")
-
-# Create a grid of points for prediction
-x1_grid <- seq(min(data$x1), max(data$x1), length.out = 100)
-x2_grid <- seq(min(data$x2), max(data$x2), length.out = 100)
-grid <- expand.grid(x1 = x1_grid, x2 = x2_grid)
-
-# Predict class labels for the grid
-predicted_labels <- predict(svm_model, newdata = grid)
-
-# Plot the decision boundary
-plot(data$x1, data$x2, col = factor(data$label), pch = 19, main = "SVM Decision Boundary")
-points(grid$x1, grid$x2, col = factor(predicted_labels), pch = ".", cex = 2.5)
-legend("topright", legend = levels(data$label), col = c("blue", "red"), pch = 19)
-```
