@@ -477,6 +477,11 @@ cross_validate <- function(folds, costs, gammas, data, seed) {
 
   return(results)
 }
+
+simpler_cm <- function(cm.out) {
+    print(cm.out[[2]])
+    print(cm.out[[3]][1:2])
+}
 ```
 
 ```{r}
@@ -494,7 +499,7 @@ From these results we see that a cost of 1 and a gamma of 10 are the best values
 svmfit_best <- svm(class ~ ., data = data2, kernel = "radial", cost = 1, gamma = 10)
 
 # Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit_best, data2), data2$class)
+confusionMatrix(predict(svmfit_best, data2), data2$class) |> simpler_cm()
 
 predicted_labels_best <- predict(svmfit_best, newdata = grid)
 
