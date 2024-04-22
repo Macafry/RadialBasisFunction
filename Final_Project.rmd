@@ -30,9 +30,8 @@ urlcolor: blue
 
 ## Introduction
 
-As we discussed in notes 11 suport vector machines are a powerful tool for classification. They work by finding the hyperplane that maximizes the margin between the two classes. The kernel trick is a way to transform the data into a higher dimensional space where the data becomes linearly separable. This is done by using a kernel function to calculate the dot product of the transformed data without actually transforming the data. This allows us to use the SVM algorithm to classify data that is not linearly separable in the original space. In this project we will explore the radial basis function kernel and how it is an extremely powerful tool for classifying data that could not be classified with a linear kernel or other data with a extremely curved decision boundary.
+In Notes 11, we explored Support Vector Machines, or SVMs, which are highly powerful classifiers. To put it briefly, they work by finding a linear hyperplane which maximizes the margin between two classes, called the decision boundary. But what happens if our data are not linearly separable and therefore a linear decision boundary cannot be formed? We can use a kernel trick, which allows us to transform the data into a higher dimension, becoming linearly separable, without actually transforming the data. The RBF Kernel in particular finds an infinite-dimensional projection of the data. In this project we will explore the Radial Basis Function Kernel and how it is an extremely powerful tool for classifying data that could not be classified with a linear kernel or other data with a extremely curved decision boundary.
 
-In Notes 11, we explored Support Vector Machines, or SVMs, which are highly powerful classifiers. To put it briefly, they work by finding a linear hyperplane which maximizes the margin between two classes, called the decision boundary. But what happens if our data are not linearly separable and therefore a linear decision boundary cannot be formed? We can use a kernel trick, which allows us to transform the data into a higher dimension, becoming linearly separable. The RBF kernel trick calculates the dot product of the transformed data without having to actually transform the data. In this project, we will further explore how we can manipulate data in ways that allow us to use the SVM algorithm on non linear data. 
 
 Consider the following non-linearly separable data:
 ```{python, echo=F, cache=T}
@@ -233,29 +232,7 @@ K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = & (a_1b_1)(a_1b_1) + (a_1b_1)(a_2
 & (a_na_1)(b_nb_1) + (a_na_2)(b_nb_2) + \cdots + (a_na_n)(b_nb_n)
 \end{align*}
 
-Observe that the expanded sum is equivalent to the dot product of the vectors containing all pair-wise interaction terms. So, in this case 
-
-$$\phi_{Power(2)}(\boldsymbol{x}) = 
-\begin{bmatrix}
-x_1x_1 \\
-x_1x_2 \\
-\vdots \\ 
-x_1x_n \\ 
-x_2x_1 \\
-x_2x_2 \\
-\vdots \\ 
-x_2x_n \\ 
-\vdots \\
-x_nx_1 \\
-x_nx_2 \\
-\vdots \\
-x_nx_n
-\end{bmatrix}
-$$
-
-and $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = \phi_{Power(2)}(\boldsymbol{a}) \cdot \phi_{Power(2)}(\boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$. However, notice we don't have to compute $\phi_{Power(2)}$ if we take $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$ instead.
-
-Applying this kernel on our data clearly results in a better classification, although not quite perfect:
+Observe that the expanded sum is equivalent to the dot product of the vectors containing all pair-wise interaction terms. So, $\phi_{Power(2)}(\boldsymbol{x}) = (x_1x_1, x_1x_2, \cdots, x_1x_n, x_2x_1, x_2x_2, \cdots, x_2x_n, \cdots, x_nx_1, x_nx_2, \cdots, x_nx_n)^T$ in this case and $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = \phi_{Power(2)}(\boldsymbol{a}) \cdot \phi_{Power(2)}(\boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$. However, notice we don't have to compute $\phi_{Power(2)}$ if we take $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$ instead. Applying this kernel on our data clearly results in a better classification, although not quite perfect:
 
 ```{python, echo=F, cache=T}
 plot_with_boundary(power_kernel(2), "Power(2)")
@@ -269,9 +246,9 @@ K_{Power(4)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymb
 K_{Power(n)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^n \text{ corresponds to the transformation containing all n-way interaction terms}
 \end{align*}
 
-Similarly, we can try these Kernels on our data.
+Similarly, we can try these Kernels on our data: 
 
-```{python, echo=F, cache=T}
+```{python, echo=F, cache=T, out.width="70%"}
 for i in range(3,6+1):
   plot_with_boundary(power_kernel(i), f"Power({i})")
 ```
@@ -294,7 +271,7 @@ plot_with_boundary(poly_kernel(2), "Poly(2)")
 
 And when we run it with higher degree Kernels, we can observe that the even-degree Kernels look very similar. However, the odd degrees Kernels can in fact classify the data efficiently as they also "include" even-degree terms.
 
-```{python, echo=F, cache=T}
+```{python, echo=F, cache=T, out.width="70%"}
 for i in range(3,6+1):
   plot_with_boundary(poly_kernel(i), f"Poly({i})")
 ```
