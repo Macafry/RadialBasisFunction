@@ -34,7 +34,7 @@ In Notes 11, we explored Support Vector Machines, or SVMs, which are highly powe
 
 
 Consider the following non-linearly separable data. Observe how the best SVM can do is classify everything as the majority class (purple).
-```{python, echo=F, cache=T, out.width="70%"}
+```{python, message=FALSE, warning=FALSE, echo=F, cache=T, results='hide',fig.keep='all'}
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
@@ -52,7 +52,7 @@ def plot_with_boundary(kernel, kernel_label=None):
     clf = svm.SVC(kernel=kernel, gamma=1).fit(X, y)
 
     # Settings for plotting
-    _, ax = plt.subplots(figsize=(4, 3))
+    _, ax = plt.subplots(figsize=(3.2, 3))
     x_min, x_max, y_min, y_max = -3, 3, -3, 3
     ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 
@@ -85,7 +85,7 @@ def plot_with_boundary(kernel, kernel_label=None):
     # Plot samples by color and add legend
     ax.scatter(X[:, 0], X[:, 1], c=y, s=150, edgecolors="k")
     ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
-    ax.set_title(f" Decision boundaries of {kernel_label} kernel in SVC")
+    ax.set_title(f"Decision boundaries of\n{kernel_label} Kernel in SVC", fontsize=10)
 
     _ = plt.show()
     
@@ -115,15 +115,14 @@ X = np.vstack(
 
 y = np.array(([0] * 5 + [1] * 5) * 4 + [0] * 5)
 
-# Plotting settings
-fig, ax = plt.subplots(figsize=(4, 3))
+
+fig, ax = plt.subplots(figsize=(3.2, 3))
 x_min, x_max, y_min, y_max = -3, 3, -3, 3
 ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
 
-# Plot samples by color and add legend
 scatter = ax.scatter(X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k")
 ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
-ax.set_title("Samples in two-dimensional feature space")
+ax.set_title("Samples in two-dimensional\nfeature space", fontsize=10)
 _ = plt.show()
 
 plot_with_boundary("linear")
@@ -227,7 +226,7 @@ K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = & (a_1b_1)(a_1b_1) + (a_1b_1)(a_2
 
 Observe that the expanded sum is equivalent to the dot product of the vectors containing all pair-wise interaction terms. So, $\phi_{Power(2)}(\boldsymbol{x}) = (x_1x_1, x_1x_2, \cdots, x_1x_n, x_2x_1, x_2x_2, \cdots, x_2x_n, \cdots, x_nx_1, x_nx_2, \cdots, x_nx_n)^T$ in this case and $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = \phi_{Power(2)}(\boldsymbol{a}) \cdot \phi_{Power(2)}(\boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$. However, notice we don't have to compute $\phi_{Power(2)}$ if we take $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$ instead. Applying this kernel on our data clearly results in a better classification, although not quite perfect:
 
-```{python, echo=F, cache=T, out.width="70%"}
+```{python, echo=F, cache=T }
 plot_with_boundary(power_kernel(2), "Power(2)")
 ```
 
@@ -241,14 +240,14 @@ K_{Power(n)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymb
 
 Similarly, we can try these Kernels on our data: 
 
-```{python, echo=F, cache=T, out.width="70%"}
+```{python, echo=F, cache=T }
 for i in range(3,6+1):
   plot_with_boundary(power_kernel(i), f"Power({i})")
 ```
 
 Like the base Kernel, the odd-power Kernels suck at classifying the data, while even power kernels do a fantastic job, specially after 4. It's also important to note that weird boundaries arise when our Kernel degree gets higher.
 
-```{python, echo=F, cache=T, out.width="70%"}
+```{python, echo=F, cache=T }
 plot_with_boundary(power_kernel(50), "Power(50)")
 ```
 
@@ -258,20 +257,20 @@ $K_{Poly(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol
 
 So, $K_{Poly(2)}$ gives us the 2-way interaction terms and all the lower order terms. Likewise,  $K_{Poly(n)}= (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^n$ gives us the n-way interaction terms and below, precisely what we wanted. This is also the polynomial kernel for SVM with $\gamma$ = 1. After trying $K_{Poly(2)}$ on our data, we get a similar plot to the one produced by $K_{Power(2)}$:
 
-```{python, echo=F, cache=T, out.width="70%"}
+```{python, echo=F, cache=T }
 plot_with_boundary(poly_kernel(2), "Poly(2)")
 ```
 
 And when we run it with higher degree Kernels, we can observe that the even-degree Kernels look very similar. However, the odd degrees Kernels can in fact classify the data efficiently as they also "include" even-degree terms.
 
-```{python, echo=F, cache=T, out.width="70%"}
+```{python, echo=F, cache=T }
 for i in range(3,6+1):
   plot_with_boundary(poly_kernel(i), f"Poly({i})")
 ```
 
 Once again, we get weirness as our Kernel degree gets higher.
 
-```{python, echo=F, cache=T, out.width="70%"}
+```{python, echo=F, cache=T }
 plot_with_boundary(poly_kernel(50), "Poly(50)")
 ```
 
@@ -314,7 +313,7 @@ $K_{RBF}(\boldsymbol{a}, \boldsymbol{b}) = \operatorname{exp}\Big(-\gamma \Vert\
 
 After running the SVM with the RBF kernel, we get pretty nice non-linear decision boundaries. 
 
-```{python, echo=F, cache=T, out.width="70%"}
+```{python, echo=F, cache=T }
 plot_with_boundary("rbf")
 ```
 
