@@ -309,7 +309,7 @@ Now we know all about fitting an SVM model with a custom Kernel. However, once t
 ### Model Parameters
 The RBF model has two tunne-able parameters: cost and gamma. 
 
-1.- The cost parameter ($\xi$) is the cost of missclassifying a data point (Soft Margin case only). A higher $\xi$ will lead to a more complex model that will try to classify all data points correctly. It trades off missclassification of training examples against increasing the margin. Larger values of cost will lead to a smaller margin. In this way $\xi$ behaves as a regularization parameter. 
+1.- The cost parameter ($C_\xi$) is the cost of missclassifying a data point (Soft Margin case only). A higher $C_\xi$ will lead to a more complex model that will try to classify all data points correctly. It trades off missclassification of training examples against increasing the margin. Larger values of cost will lead to a smaller margin. In this way $C_\xi$ behaves as a regularization parameter. 
 
 2.- The gamma ($\gamma$) parameter controls how far the influence of a single training example reaches. A low $\gamma$ will consider points far away from the decision boundary in calculations, while a high $\gamma$ will consider only points close to the decision boundary. The $\gamma$ parameters can be seen as the inverse of the radius of influence of samples selected by the model as support vectors.
 
@@ -450,10 +450,10 @@ plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".",
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
 
-We can observe that the decision boundary doesn't capture the spiraly-ness of the data very well. This is in part since we used the default $\xi$ and $\gamma$.
+We can observe that the decision boundary doesn't capture the spiraly-ness of the data very well. This is in part since we used the default $C_\xi$ and $\gamma$.
 
 ### Cross Validating RBF
-We can use cross-validation to find the best values for $\xi$ and $\gamma$. Fortunately, the `svm` function has built in cross-validation. Setting the `cross` parameter to the number of folds, in this case 5. However, the `svm` function does not *find* the best set of parameters, it only calculates statistics for a given set of parameters. The following function performs the full cross-validation for a RBF model:
+We can use cross-validation to find the best values for $C_\xi$ and $\gamma$. Fortunately, the `svm` function has built in cross-validation. Setting the `cross` parameter to the number of folds, in this case 5. However, the `svm` function does not *find* the best set of parameters, it only calculates statistics for a given set of parameters. The following function performs the full cross-validation for a RBF model:
 ```{r, echo=TRUE, cache=TRUE}
 # First write a simple cross validation function
 cross_validate <- function(folds, costs, gammas, data, seed) {
