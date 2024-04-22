@@ -33,47 +33,13 @@ urlcolor: blue
 In Notes 11, we explored Support Vector Machines, or SVMs, which are highly powerful classifiers. To put it briefly, they work by finding a linear hyperplane which maximizes the margin between two classes, called the decision boundary. But what happens if our data are not linearly separable and therefore a linear decision boundary cannot be formed? We can use a kernel trick, which allows us to transform the data into a higher dimension, becoming linearly separable, without actually transforming the data. The RBF Kernel in particular finds an infinite-dimensional projection of the data. In this project we will explore the Radial Basis Function Kernel and how it is an extremely powerful tool for classifying data that could not be classified with a linear kernel or other data with a extremely curved decision boundary.
 
 
-Consider the following non-linearly separable data:
-```{python, echo=F, cache=T}
+Consider the following non-linearly separable data. Observe how the best SVM can do is classify everything as the majority class (purple).
+```{python, echo=F, cache=T, out.width="70%"}
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
 import matplotlib.colors as clr
 import numpy as np
-
-template = np.array(
-    [
-        [1, 1],
-        [1.1, 1.1],
-        [0.9, 0.9],
-        [1.1, 0.9],
-        [0.9, 1.1]
-    ]
-)
-
-X = np.vstack(
-    [
-        template + np.array([-3,-3]), template + np.array([-1,-3]), template + np.array([1,-3]),
-        template + np.array([-3,-1]), template + np.array([-1,-1]), template + np.array([1,-1]),
-        template + np.array([-3,1]), template + np.array([-1,1]), template + np.array([1,1])
-    ]
-)
-
-y = np.array(([0] * 5 + [1] * 5) * 4 + [0] * 5)
-
-# Plotting settings
-fig, ax = plt.subplots(figsize=(4, 3))
-x_min, x_max, y_min, y_max = -3, 3, -3, 3
-ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
-
-# Plot samples by color and add legend
-scatter = ax.scatter(X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k")
-ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
-ax.set_title("Samples in two-dimensional feature space")
-_ = plt.show()
-```
-
-```{python, echo=F, cache=T}
 from sklearn import svm
 from sklearn.inspection import DecisionBoundaryDisplay
 
@@ -128,11 +94,38 @@ def power_kernel(p):
 
 def poly_kernel(p):
     return lambda A, B: (A @ B.T + 1 ) ** p
-```
 
-In this case, the best SVM can do is classify everything as the majority class (purple).
+template = np.array(
+    [
+        [1, 1],
+        [1.1, 1.1],
+        [0.9, 0.9],
+        [1.1, 0.9],
+        [0.9, 1.1]
+    ]
+)
 
-```{python, echo=F, cache=T}
+X = np.vstack(
+    [
+        template + np.array([-3,-3]), template + np.array([-1,-3]), template + np.array([1,-3]),
+        template + np.array([-3,-1]), template + np.array([-1,-1]), template + np.array([1,-1]),
+        template + np.array([-3,1]), template + np.array([-1,1]), template + np.array([1,1])
+    ]
+)
+
+y = np.array(([0] * 5 + [1] * 5) * 4 + [0] * 5)
+
+# Plotting settings
+fig, ax = plt.subplots(figsize=(4, 3))
+x_min, x_max, y_min, y_max = -3, 3, -3, 3
+ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
+
+# Plot samples by color and add legend
+scatter = ax.scatter(X[:, 0], X[:, 1], s=150, c=y, label=y, edgecolors="k")
+ax.legend(*scatter.legend_elements(), loc="upper right", title="Classes")
+ax.set_title("Samples in two-dimensional feature space")
+_ = plt.show()
+
 plot_with_boundary("linear")
 ```
 
@@ -234,7 +227,7 @@ K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = & (a_1b_1)(a_1b_1) + (a_1b_1)(a_2
 
 Observe that the expanded sum is equivalent to the dot product of the vectors containing all pair-wise interaction terms. So, $\phi_{Power(2)}(\boldsymbol{x}) = (x_1x_1, x_1x_2, \cdots, x_1x_n, x_2x_1, x_2x_2, \cdots, x_2x_n, \cdots, x_nx_1, x_nx_2, \cdots, x_nx_n)^T$ in this case and $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = \phi_{Power(2)}(\boldsymbol{a}) \cdot \phi_{Power(2)}(\boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$. However, notice we don't have to compute $\phi_{Power(2)}$ if we take $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^2$ instead. Applying this kernel on our data clearly results in a better classification, although not quite perfect:
 
-```{python, echo=F, cache=T}
+```{python, echo=F, cache=T, out.width="70%"}
 plot_with_boundary(power_kernel(2), "Power(2)")
 ```
 
@@ -255,7 +248,7 @@ for i in range(3,6+1):
 
 Like the base Kernel, the odd-power Kernels suck at classifying the data, while even power kernels do a fantastic job, specially after 4. It's also important to note that weird boundaries arise when our Kernel degree gets higher.
 
-```{python, echo=F, cache=T}
+```{python, echo=F, cache=T, out.width="70%"}
 plot_with_boundary(power_kernel(50), "Power(50)")
 ```
 
@@ -265,7 +258,7 @@ $K_{Poly(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol
 
 So, $K_{Poly(2)}$ gives us the 2-way interaction terms and all the lower order terms. Likewise,  $K_{Poly(n)}= (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^n$ gives us the n-way interaction terms and below, precisely what we wanted. This is also the polynomial kernel for SVM with $\gamma$ = 1. After trying $K_{Poly(2)}$ on our data, we get a similar plot to the one produced by $K_{Power(2)}$:
 
-```{python, echo=F, cache=T}
+```{python, echo=F, cache=T, out.width="70%"}
 plot_with_boundary(poly_kernel(2), "Poly(2)")
 ```
 
@@ -278,7 +271,7 @@ for i in range(3,6+1):
 
 Once again, we get weirness as our Kernel degree gets higher.
 
-```{python, echo=F, cache=T}
+```{python, echo=F, cache=T, out.width="70%"}
 plot_with_boundary(poly_kernel(50), "Poly(50)")
 ```
 
@@ -321,7 +314,7 @@ $K_{RBF}(\boldsymbol{a}, \boldsymbol{b}) = \operatorname{exp}\Big(-\gamma \Vert\
 
 After running the SVM with the RBF kernel, we get pretty nice non-linear decision boundaries. 
 
-```{python, echo=F, cache=T}
+```{python, echo=F, cache=T, out.width="70%"}
 plot_with_boundary("rbf")
 ```
 
@@ -333,6 +326,7 @@ In essence RBF is so special because it performs the optimization over an infini
 
 # Strengths and Weaknesses
 Strengths:
+
 1. RBFs are able to perform optimization over an $\infty$-dimensional space using a relatively simple formula, making them computationally inexpensive while still having a lot of power. 
 
 2. There are no preassumptions that need to be made about the data, making it a great tool when the distribution of data is not known. 
@@ -341,7 +335,8 @@ Strengths:
 
 4. The hyperparameter $\gamma$ and the cost parameter (soft margin case) allow us to be more flexible about model specificity. 
 
-Weaknesses: 
+Weaknesses:
+
 1. RBFs are non probablistic, meaning points are only classified as being in one class or the other. We cannot adjust the probability cutoff for classifying points like we might in logistic regression. However, We *can* FORCE a probabilistic model by fitting a logistic regression around the RBF model.
 
 2. Like SVMs, we do not get easily interpretable coefficients. So, it becomes difficult to assess the influence of a specific variable on classification.
