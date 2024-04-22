@@ -924,7 +924,7 @@ We can see that on the test data which was 20% of the whole data set the model g
 
 From the example data set we know that k-Nearest Neighbors also does well on these types of data sets so let's see how it does on this data set to make comparisons and see if we have found the best model.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, cache=FALSE}
 # Create a list of k values to try
 ks <- seq(1, 300, by = 2)
 
@@ -933,7 +933,7 @@ training_matrix <- as.data.frame(mnist_27$train)
 colnames(training_matrix) <- c("class", "x", "y")
 
 # Run the cross validation function
-validation_data_frame_knn_mnist <- cross_knn(10, ks, training_matrix, seed = 2024)
+validation_data_frame_knn_mnist <- cross_knn(10, ks, training_matrix, seed = 5000)
 
 # Print the top 5 best k values
 print(validation_data_frame_knn_mnist[order(-validation_data_frame_knn_mnist$accuracy), ][1:5, ])
