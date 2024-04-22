@@ -693,11 +693,13 @@ points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 Now let's check how a Logistic Regression model does on this data. After fitting the model, we get the following confusion Matrix. The Logistic Regression has an accuracy of 54.4%, which is better than the previous 2 SVM models, however, it is still not much better than random guessing.
 
 ```{r, echo=FALSE}
-# Use a logistic regression model to classify the data
-logit_model <- glm(class ~ x + y, data = data2, family = "binomial")
+# Use a logistic regression model to classify the data (add many interaction terms)
+logit_model <- glm(class ~ ., data = data2, family = "binomial")
+
+summary(logit_model)
+
 # Predict using the model
 predicted_probabilities <- predict(logit_model, type = "response")
-
 
 # Change all the Falses to 0 and Trues to 1
 predicted_probabilities2 <- ifelse(predicted_probabilities > 0.5, 1, 0)
@@ -712,12 +714,23 @@ If we peek at the predicted probabilities, we can observe the model is not very 
 print(predicted_probabilities |> head())
 ```
 
-Finally,The plot is a mess, basically the Logistic Regression model has no clue as to what's going on.
+Finally, the plot looks like the linear kernel since we do not have any interaction terms. The decision boundary is a straight line that doesn't capture the spiral shape of the data. Adding interaction terms actually made model accuracy worse.
+
 ```{r, echo=FALSE, out.width="70%"}
+# Create grid data for the decision boundary
+x1_grid <- seq(min(data2$x), max(data2$x), length.out = 100)
+x2_grid <- seq(min(data2$y), max(data2$y), length.out = 100)
+grid <- expand.grid(x = x1_grid, y = x2_grid)
+
+# Predict using the model
+grid$predicted_probabilities <- predict(logit_model, newdata = grid, type = "response")
+
+grid$predictions <- ifelse(grid$predicted_probabilities > 0.5, 1, 0)
+
 # Plot the decision boundary
-predicted_labels_logit <- predicted_probabilities > 0.5
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_logit + 1],
-     pch = ".", cex = 3.5, xlab = "x", ylab = "y")
+plot(grid$x, grid$y, col = boundary_colors[as.factor(grid$predictions)], pch = ".",
+     cex = 3.5, xlab = "x", ylab = "y")
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
 Finally let's check how a KNN model does on this data. We find that the best k value is 3. We can expect the KNN model to perform much better for weird decision boundaries, so let's calculate both confusion matrices: training and testing. We can observe that the training accuracy of 85.7% and a testing accuracy of 70.4%. While the training accuracy is greater when compared to RBF (82.1%), the training accuracy is in fact lower greater when compared to RBF (75.6%). This is an indicator that the KNN model is significantly overfit and performs worse when predicting new data than RBF in this scenario.
