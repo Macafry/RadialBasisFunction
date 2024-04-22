@@ -958,7 +958,7 @@ points(mnist_27$train$x_1, mnist_27$train$x_2,
        col = point_colors[mnist_27$train$y], pch = 19)
 ```
 
-This decision boundary looks similar to the one the RBF kernel produced, with the default values of cost and gamma, and the accuracy is the exact same at 83.38%. It seems that this decision boundary just slightly predicts more 2's than the RBF kernel, but overall they are very similar. Now let's see how it does on the test data so we can make a final conclusion.
+This decision boundary looks similar to the one the RBF kernel produced with the default values of cost and gamma, and the accuracy is the exact same at 83.38%. It seems that this decision boundary just slightly predicts more 2's than the RBF kernel, but overall they are very similar. Now let's see how it does on the test data so we can make a final conclusion.
 
 ```{r, echo=FALSE}
 # Put the test data into the proper format
