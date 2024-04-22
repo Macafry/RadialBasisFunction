@@ -743,7 +743,7 @@ cross_knn <- function(folds, ks, dataset, seed) {
       test_data <- dataset[test_indices, c("x", "y")]
       test_labels <- dataset$class[test_indices]
 
-      knn_model <- knn(train = train_data, test = test_data, cl = train_labels, k = k)
+      knn_model <- knn3(y ~ ., train = train_data, test = test_data, cl = train_labels, k = k)
 
       accuracy <- sum(knn_model == test_labels) / length(test_labels)
       fold_accuracies <- c(fold_accuracies, accuracy)
@@ -772,7 +772,7 @@ We find that the best k value is 3 with an accuracy of 72.2%. I assume the k is 
 k <- 3
 
 # Use a KNN model to classify the data
-knn_model <- knn(train = data2[, c("x", "y")], test = data2[, c("x", "y")], cl = data2$class, k = k)
+knn_model <- knn3(train = data2[, c("x", "y")], test = data2[, c("x", "y")], cl = data2$class, k = k)
 
 # Convert knn_model to numeric
 knn_model <- as.numeric(knn_model)
@@ -784,7 +784,7 @@ knn_model <- knn_model - 1
 confusionMatrix(as.factor(knn_model), data2$class) |> simpler_cm()
 
 # Create the grid for the decision boundary
-predicted_labels_knn <- knn(train = data2[, c("x", "y")], test = grid, cl = data2$class, k = k)
+predicted_labels_knn <- knn3(train = data2[, c("x", "y")], test = grid, cl = data2$class, k = k)
 ```
 ```{r, echo=FALSE}
 # Convert knn_model to numeric
@@ -805,7 +805,7 @@ This time the accuracy is quite good at 85.7% which is even better than the cros
 
 ```{r, echo=FALSE}
 # Create a confusion matrix to evaluate the KNN model
-knn_model_test <- knn(train = data2[, c("x", "y")], test = test_data2[, c("x", "y")], cl = data2$class, k = k)
+knn_model_test <- knn3(train = data2[, c("x", "y")], test = test_data2[, c("x", "y")], cl = data2$class, k = k)
 
 # Convert knn_model to numeric
 knn_model_test <- as.numeric(knn_model_test)
@@ -946,7 +946,7 @@ From the cross validation we see that a k value of 89 is the best value for this
 k <- 89
 
 # Use a KNN model to classify the data
-knn_model_mnist <- knn(train = training_matrix[, c("x", "y")], test = training_matrix[, c("x", "y")], cl = training_matrix$class, k = k)
+knn_model_mnist <- knn3(train = training_matrix[, c("x", "y")], test = training_matrix[, c("x", "y")], cl = training_matrix$class, k = k)
 
 # Convert knn_model to numeric
 knn_model_mnist <- as.numeric(knn_model_mnist)
@@ -963,7 +963,7 @@ x2_grid <- seq(min(training_matrix$y), max(training_matrix$y), length.out = 100)
 
 grid <- expand.grid(x = x1_grid, y = x2_grid)
 
-predicted_labels_knn_mnist <- knn(train = training_matrix[, c("x", "y")], test = grid, cl = training_matrix$class, k = k)
+predicted_labels_knn_mnist <- knn3(train = training_matrix[, c("x", "y")], test = grid, cl = training_matrix$class, k = k)
 
 # Convert knn_model to numeric
 predicted_labels_knn_mnist <- as.numeric(predicted_labels_knn_mnist)
@@ -981,7 +981,7 @@ mnist_27_test <- as.data.frame(mnist_27$test)
 colnames(mnist_27_test) <- c("class", "x", "y")
 
 # Create a confusion matrix to evaluate the KNN model
-knn_model_test_mnist <- knn(train = training_matrix[, c("x", "y")], test = mnist_27_test[, c("x", "y")], cl = training_matrix$class, k = k)
+knn_model_test_mnist <- knn3(train = training_matrix[, c("x", "y")], test = mnist_27_test[, c("x", "y")], cl = training_matrix$class, k = k)
 
 # Convert knn_model to numeric
 knn_model_test_mnist <- as.numeric(knn_model_test_mnist)
