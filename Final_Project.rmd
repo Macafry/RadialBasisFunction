@@ -677,6 +677,8 @@ gammas <- c(0.1, 1, 10)
 # print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy), ][1:5, ])
 ```
 
+From this we get that the best degree, cost, and gamma are 5, 10 and 0.1 respectively, although it does not seem like it will perform well. Let's check just to be sure.
+
 ```{r}
 # Make the best poly model based on the cross validation
 svm_poly <- svm(class ~ ., data = data2, kernel = "polynomial", degree = 5, cost = 10, gamma = 0.1)
@@ -920,7 +922,7 @@ confusionMatrix(predict(svmfit_best_mnist, mnist_27$test), mnist_27$test$y) |> s
 
 We can see that on the test data which was 20% of the whole data set the model got an accuracy of 83.5% which is basically the same as the training. This means we have found a good model that generalizes well to new data and also did well on it's own training data. This means we have found a good mix of bias and variance in our model.
 
-From the example dataset we know that k-Nearst Neighbors also does well on these types of data sets so let's see how it does on this data set to make comparisons and see if we have found the best model.
+From the example data set we know that k-Nearest Neighbors also does well on these types of data sets so let's see how it does on this data set to make comparisons and see if we have found the best model.
 
 ```{r, echo=FALSE}
 # Create a list of k values to try
