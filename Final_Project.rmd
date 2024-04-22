@@ -293,8 +293,8 @@ In essence RBF is so special because it performs the optimization over an infini
 ### Classifying the data
 
 Now we know all about fitting an SVM model with a custom Kernel. However, once the model has been fit, how do we classify our data? We compute the kernel between $\boldsymbol{\beta}$ and an observation, subtract c, and take the sign:\begin{align*}
-&\text{if } K(\boldsymbol{\beta}, \xb_i) - c > 0 \rightarrow y_i = 1\\
-&\text{if } K(\boldsymbol{\beta}, \xb_i) - c < 0 \rightarrow y_i = -1
+&\text{if } K(\boldsymbol{\beta}, \xb_i) - c > 0 \rightarrow \hat{y_i} = 1\\
+&\text{if } K(\boldsymbol{\beta}, \xb_i) - c < 0 \rightarrow \hat{y_i} = -1
 \end{align*}
 
 
@@ -304,7 +304,7 @@ Now we know all about fitting an SVM model with a custom Kernel. However, once t
 
 1.- There are two classes to classify
 
-2.- $K$, the matrix composed of all pairwise kernels ($k_ij = K( \xb_i , \xb_j )$), is positive semi-definite. This is satisfied by the Radial Basis Kernel.
+2.- $K$, the matrix composed of all pairwise kernels ($k_{ij} = K( \xb_i , \xb_j )$), is positive semi-definite. This is satisfied by the Radial Basis Kernel.
 
 ### Model Parameters
 The RBF model has two tunne-able parameters: cost and gamma. 
