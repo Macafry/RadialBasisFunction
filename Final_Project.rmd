@@ -45,6 +45,7 @@ from sklearn import svm
 from sklearn.inspection import DecisionBoundaryDisplay
 
 
+
 def plot_with_boundary(kernel, kernel_label=None):
     if kernel_label is None:
       kernel_label = kernel
