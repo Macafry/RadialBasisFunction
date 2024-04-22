@@ -132,33 +132,22 @@ plot_with_boundary("linear")
 
 There are some workarounds by using other **Kernels**. But, in order to understand what a Kernel is, we need to dive into the math for SVMs. 
 
-Disclaimer: For the math sections we'll be focusing on the hard margin case as it's easier to follow. Nonetheless, the insights we gain will also apply to the soft margin case.
+## Mathematics behind SVM
+We'll now dive into the mathematics behind SVM's. The mathematics can be a little bit advanced, but understanding the results is sufficient. It's important to note that we'll be focusing on the hard margin case as it's easier to follow. Nonetheless, the insights we gain will also apply to the soft margin case.
 
-## Dual Problem
+### Dual Problem
 
-For the Support Vector Machine algorithm, our goal is to find a $\beta$ and $c$ under the following optimization objective:
-\begin{align*}
-\underset{\boldsymbol{\beta}, c}{\text{minimize }} & \Vert\boldsymbol{\beta}\Vert^2_2\\
-\text{subject to } & y_i(\boldsymbol{\beta} \cdot\xb_i-c)\ge 1 \text{ for all } i
-\end{align*}
-
-For convenience, let's divide our objective function by 2, which doesn't affect the results:
-
-\begin{align*}
+For the Support Vector Machine algorithm, our goal is to find a $\beta$ and $c$ under the following optimization objective:\begin{align*}
 \underset{\boldsymbol{\beta}, c}{\text{minimize }} & \dfrac{1}{2}\Vert\boldsymbol{\beta}\Vert^2_2\\
 \text{subject to } & y_i(\boldsymbol{\beta} \cdot\xb_i-c)\ge 1 \text{ for all } i
 \end{align*}
 
-Then we can find the [dual optimization problem](https://www.youtube.com/watch?v=uh1Dk68cfWs), using Lagrange Multipliers:
-
-\begin{align*}
+Then, we can find the [dual optimization problem](https://www.youtube.com/watch?v=uh1Dk68cfWs) by the use Lagrange Multipliers:\begin{align*}
 \underset{\boldsymbol{\lambda}}{\text{maximize }}\underset{\boldsymbol{\beta}, c}{\text{minimize }} 
 L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) = \dfrac{1}{2}\Vert\boldsymbol{\beta}\Vert^2_2 - \sum_{i=1}^n \lambda_i \Big( y_i(\boldsymbol{\beta} \cdot\xb_i-c) - 1 \Big) 
 \end{align*}
 
-The dual problem will be satisfied when all partial derivatives are zero, Which leads us to the following results:
-
-\begin{align*}
+The dual problem will be satisfied when all partial derivatives are zero, Which leads us to the following results:\begin{align*}
 \dfrac{\partial{L}}{\partial{\boldsymbol{\beta}}} & 
 = \boldsymbol{\beta} - \sum_{i=1}^n \lambda_i y_i \xb_i \overset{\text{set}}{=} 0 \iff
 \boldsymbol{\beta} = \sum_{i=1}^n \lambda_i y_i \xb_i \\
@@ -167,10 +156,7 @@ The dual problem will be satisfied when all partial derivatives are zero, Which 
 \dfrac{\partial{L}}{\partial{c}} & = \sum_{i=1}^n \lambda_i y_i \overset{\text{set}}{=} 0 \iff \boldsymbol{\lambda} \cdot \boldsymbol{y} = 0
 \end{align*}
 
-Observe how $\boldsymbol{\beta}$ and $c$ can be derived from $\boldsymbol{\lambda}$, $\boldsymbol{y}$ and $X$. Substituting these results into the Lagrangian should lead to some nice results. Although, substituting for $c$ won't be necessary (it gets multiplied by zero). Then, replacing $\boldsymbol{\beta}$ in our Lagrangian yields:
-
-
-\begin{align*}
+Observe how $\boldsymbol{\beta}$ and $c$ can be derived from $\boldsymbol{\lambda}$, $\boldsymbol{y}$ and $X$. Substituting these results into the Lagrangian should lead to some nice results. Although, substituting for $c$ won't be necessary (it gets multiplied by zero). Then, replacing $\boldsymbol{\beta}$ in our Lagrangian yields the following results:\begin{align*}
 L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) &= \dfrac{1}{2}\Vert\boldsymbol{\beta}\Vert^2_2 - \sum_{i=1}^n \lambda_i \Big( y_i(\boldsymbol{\beta} \cdot\xb_i-c) - 1 \Big)  \\
 &= \dfrac{1}{2}\Vert\boldsymbol{\beta}\Vert^2_2 - \sum_{i=1}^n \lambda_i y_i\boldsymbol{\beta} \cdot\xb_i + c \sum_{i=1}^n \lambda_iy_i + \sum_{i=1}^n \lambda_i \\
 &= \dfrac{1}{2}\Vert\sum_{j=1}^n \lambda_j y_j \xb_j\Vert^2_2  
@@ -184,13 +170,11 @@ L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) &= \sum_{i=1}^n\lambda_i-\dfrac{1
 \end{align*}
 
 
-This shows a version of the Lagrangian that doesn't depend on $\boldsymbol{\beta}$ nor $c$, which means the optimization problem reduces to:
-
-\begin{align*}
+This shows a version of the Lagrangian that doesn't depend on $\boldsymbol{\beta}$ nor $c$, which means the optimization problem reduces to:\begin{align*}
 \underset{\boldsymbol{\lambda}}{\text{maximize }}L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) &= \sum_{i=1}^n\lambda_i-\dfrac{1}{2}\sum_{i=1}^n \sum_{j=1}^n \lambda_i\lambda_jy_iy_j\xb_i \cdot\xb_j 
 \end{align*}
 
-## Kernel Trick
+### Kernel Trick
 
 But, why did we go through all that trouble? In this form, we can observe that the Lagrangian depends  on 3 components only:
 
@@ -199,8 +183,7 @@ But, why did we go through all that trouble? In this form, we can observe that t
 - $\xb_i$, the features we're using to predict the class
 
 
-Notice, $\xb_i$ is the only aspect of our model we can modify (via feature engineering). So, let $\phi(\xb)$ be our feature engineer transformation, then our Lagrangian becomes:
-\begin{align*}
+Notice, $\xb_i$ is the only aspect of our model we can modify (via feature engineering). So, let $\phi(\xb)$ be our feature engineer transformation, then our Lagrangian becomes:\begin{align*}
 L(\boldsymbol{\beta}, c, \boldsymbol{\lambda}) &= \sum_{i=1}^n\lambda_i -\dfrac{1}{2}\sum_{i=1}^n \sum_{j=1}^n \lambda_i\lambda_jy_iy_j\phi(\xb_i) \cdot\phi(\xb_j) 
 \end{align*}
 
@@ -214,8 +197,7 @@ If we expand the dot product, we get:
 
 $K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = (a_1b_1 + a_2b_2 + \cdots + a_nb_n)^2$
 
-Expanding the square, gives:
-\begin{align*}
+Expanding the square, gives:\begin{align*}
 K_{Power(2)}(\boldsymbol{a}, \boldsymbol{b}) = & (a_1b_1)(a_1b_1) + (a_1b_1)(a_2b_2) + \cdots + (a_1b_1)(a_nb_n) + \\
 & (a_2b_2)(a_1b_1) + (a_2b_2)(a_2b_2) + \cdots + (a_2b_2)(a_nb_n) + \\
 & \hspace{1in} \vdots\\
@@ -232,26 +214,14 @@ Observe that the expanded sum is equivalent to the dot product of the vectors co
 plot_with_boundary(power_kernel(2),"Power(2)")
 ```
 
-Likewise, one can show that: 
-\begin{align*}
-K_{Power(3)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^3 \text{ corresponds to the transformation containing all 3-way interaction terms}\\
-K_{Power(4)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^4 \text{ corresponds to the transformation containing all 4-way interaction terms}\\
-&\hspace{1in}\vdots\\
-K_{Power(n)}(\boldsymbol{a}, \boldsymbol{b}) = & (\boldsymbol{a} \cdot \boldsymbol{b})^n \text{ corresponds to the transformation containing all n-way interaction terms}
-\end{align*}
-
-Similarly, we can try these Kernels on our data: 
+Likewise, one can show that $K_{Power(n)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b})^n$ corresponds to the transformation containing all n-way interaction terms.
 
 ```{python, echo=F, cache=T }
 for i in range(3,6+1):
   plot_with_boundary(power_kernel(i),f"Power({i})")
 ```
 
-Like the base Kernel, the odd-power Kernels suck at classifying the data, while even power kernels do a fantastic job, specially after 4. It's also important to note that weird boundaries arise when our Kernel degree gets higher.
-
-
-
-However, as we learned in Applied Statistics, whenever we include high order terms, we also want to include all lower level terms. So, let's inspect the following kernel:
+Like the base Kernel, the odd-power Kernels suck at classifying the data, while even power kernels do a fantastic job, specially after 4. This oddity can be mitigated by a principle learned in Applied Statistics - whenever we include high order terms, we also want to include all lower level terms. So, let's inspect the following kernel:
 
 $K_{Poly(2)}(\boldsymbol{a}, \boldsymbol{b}) = (\boldsymbol{a} \cdot \boldsymbol{b} + 1)^2 = \underset{\text{2-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^2} + \underset{\text{1-way}}{2(\boldsymbol{a} \cdot \boldsymbol{b})} + \underset{\text{0-way}}{1}$ 
 
@@ -268,24 +238,17 @@ for i in range(3,6+1):
   plot_with_boundary(poly_kernel(i),f"Poly({i})")
 ```
 
-Once again, we get weirdness as our Kernel degree gets higher.
-
 ```{python, echo=F, cache=T }
 plot_with_boundary(power_kernel(50),"Power(50)")
 plot_with_boundary(poly_kernel(50),"Poly(50)")
 ```
 
+It's also important to note that weird boundaries arise when our Kernel degree gets higher. $K_{Power(50)}$ is similar to $K_{Power(2)}$, but inside-out. This proposes an interesting conundrum: which n should we pick? We could try using using cross-validation. However, our friend ***Taylor*** might have a way of trying out all n values at the same time, while giving more weight to lower order terms than the higher order terms (following the principle of parsimony).
 
-This proposes an interesting conundrum: which n should we pick? We could try using using cross-validation. However, our friend ***Taylor*** might have a way of trying out all n values at the same time, while giving more weight to lower order terms than the higher order terms (following the principle of parsimony).
-
-Recall:
-
-$\operatorname{exp}(x) = 1 + \dfrac{1}{1!}x^1 + \dfrac{1}{2!}x^2 + \dfrac{1}{3!}x^3 + \dfrac{1}{4!}x^4 + \cdots$
+Recall: $\operatorname{exp}(x) = 1 + \dfrac{1}{1!}x^1 + \dfrac{1}{2!}x^2 + \dfrac{1}{3!}x^3 + \dfrac{1}{4!}x^4 + \cdots$
 
 
-Then by plugging $\boldsymbol{a} \cdot \boldsymbol{b}$ for $x$, we get:
-
-$\operatorname{exp}(\boldsymbol{a} \cdot \boldsymbol{b}) = \underset{\text{0-way}}{1} + 
+Then by plugging $\boldsymbol{a} \cdot \boldsymbol{b}$ for $x$, we get: $\operatorname{exp}(\boldsymbol{a} \cdot \boldsymbol{b}) = \underset{\text{0-way}}{1} + 
 \dfrac{1}{1!}\underset{\text{1-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^1} + 
 \dfrac{1}{2!}\underset{\text{2-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^2} + 
 \dfrac{1}{3!}\underset{\text{3-way}}{(\boldsymbol{a} \cdot \boldsymbol{b})^3} + 
@@ -293,9 +256,7 @@ $\operatorname{exp}(\boldsymbol{a} \cdot \boldsymbol{b}) = \underset{\text{0-way
 
 Which gives us ALL n-way interaction terms, weighing the lower terms more and the higher terms less. This also means we're essentially computing the dot product of an infinite-dimensional transformation, without having to compute infinite transformations. However, to get to the Radial Basis Function, we need a couple transformations:
 
-In practice, any SVM algorithm normalizes the data before performing the classification. So, let's multiply our kernel by $\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right)$. That way, outliers or observations that deviate a lot contribute less to our model.
-
-\begin{align*}
+In practice, any SVM algorithm normalizes the data before performing the classification. So, let's multiply our kernel by $\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right)$. That way, outliers or observations that deviate a lot contribute less to our model.\begin{align*}
 \operatorname{exp}\Big(\boldsymbol{a} \cdot \boldsymbol{b}\Big)\operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right) &= 
 \operatorname{exp}\left(\boldsymbol{a} \cdot \boldsymbol{b}-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2}{2}\right)\\
 &= \operatorname{exp}\left(-\dfrac{\Vert\boldsymbol{a}\Vert^2_2 + \Vert\boldsymbol{b}\Vert^2_2- 2 \boldsymbol{a} \cdot \boldsymbol{b}}{2}\right)\\
@@ -345,14 +306,14 @@ Weaknesses:
 
 4. Because RBFs are more complex models, it is easier to overfit them. 
 
-## Example Data
+## Example Spiral Data
 To show the power of the Radial Basis Function we will first use a generated data set.
 
-Before we get started let's briefly discuss the cost and gamma parameters. The cost parameter is the cost of misclassifying a data point. A higher cost will lead to a more complex model that will try to classify all data points correctly. It trades off misclassification of training examples against increasing the margin. Larger values of cost will lead to a smaller margin. In this way cost behaves as a regularization parameter. The gamma parameter controls how far the influence of a single training example reaches. A low gamma will consider points far away from the decision boundary in calculations, while a high gamma will consider only points close to the decision boundary. The gamma parameters can be seen as the inverse of the radius of influence of samples selected by the model as support vectors.
+Before we get started let's briefly discuss the cost and gamma parameters. The cost parameter ($\xi$) is the cost of missclassifying a data point. A higher $\xi$ will lead to a more complex model that will try to classify all data points correctly. It trades off missclassification of training examples against increasing the margin. Larger values of cost will lead to a smaller margin. In this way $\xi$ behaves as a regularization parameter. The gamma ($\gamma$) parameter controls how far the influence of a single training example reaches. A low $\gamma$ will consider points far away from the decision boundary in calculations, while a high $\gamma$ will consider only points close to the decision boundary. The $\gamma$ parameters can be seen as the inverse of the radius of influence of samples selected by the model as support vectors.
 
-First we will generate the data. For this example I am creating a sort of spiral pattern using 1000 data points. I'm using this pattern because it is a case where a linear kernel would not work well. The data is generated in polar coordinates and then converted to x and y coordinates. The data is then offset a bit so there is some overlap between the two classes.
+### Fitting the Model
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, cache=TRUE}
 n <- 1000
 r <- 6 * pi + 1
 r_offset <- 2
@@ -398,18 +359,16 @@ generate_spiral <- function(n, r, r_offset, colors, seed) {
 data <- generate_spiral(n, r, r_offset, colors, seed = 2024)
 ```
 
-Now lets take a look at this generated data.
+Observe the following generated data. It matches a spiral pattern with a bit of overlap between the two classes. The data was generated with polar coordinates, so we might think about converting to polar coordinates first. However, if this data weren't generated we might not make that connection. This is where the RBF kernel can be very useful.
 
-```{r}
+```{r, echo=FALSE}
 # Plot the data in the x and y coordinates
 plot(data$x, data$y, col = data$color, pch = 19, xlab = "x", ylab = "y")
 ```
 
-As we can see it matches a spiral pattern with a bit of overlap between the two classes. Since we know how the data was genreated it might be smart to convert to polar coordinates, but if this data weren't generated we might not make that connection. This is where the RBF kernel can be very useful.
+Now lets use the RBF kernel to classify this data. First, let's use a cost of 1 and a gamma of 1 (the default values).
 
-Now lets use the RBF kernel to classify this data. Right now we will use a cost of 1 and a gamma of 1, the default values of the function, but later we can use cross-validation to find the best values for these parameters.
-
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # Load the required svm library
 library(e1071)
 library(caret)
@@ -422,25 +381,28 @@ data2 <- data.frame(class = data$class, x = data$x, y = data$y)
 data2$class <- as.factor(data2$class)
 
 # Use a radial basis function kernel to classify the data with the SVM function
-svmfit <- svm(class ~ ., data = data2, kernel = "radial")
-print(svmfit)
+(svmfit <- svm(class ~ ., data = data2, kernel = "radial"))
+```
 
+## Diagnostics
+
+### Confusion Matrix
+As RBF (and SVM) are classification algorithms, the confusion matrix diagnostics serve as a well tested diagnostic toolkit. Below we have the confusion matrix for our RBF model. The accuracy is 55.1%, which is not much better than random guessing. Note: The data in this project has a split close enough to 50-50. This means that accuracy works fine as an overall metric to gauge the models ability. For all future confusion matrices we will look at just accuracy and kappa.
+
+```{r, cache=TRUE}
 # Create a confusion matrix to evaluate the SVM model
 confusionMatrix(predict(svmfit, data2), data2$class)
 ```
 
-This doesn't look that good as it is hardly better than the trivial approach which would get 51.3% correct compared to the 55.1% of our model. For the data in this project we have a split near 50% for both classes and predicting one class incorrectly isn't worse than the other which means that accuracy works fine as an overall metric to gadge the models ability. For all future confusion matixes we will look at this and kappa only to save space. Let's look at the decision boundary to see what it thinks, here is the code to do that.
+### Decision Boundary
+Another way of assessing the model is to look at the decision boundary. The following code plots the decision boundary for our model (both with and without the points):
 
-```{r}
+```{r, fig.show="hold", out.width="50%", cache=TRUE}
 # Define colors for data points
 point_colors <- c("blue", "red")
 
 # Define colors for decision boundary
 boundary_colors <- c("skyblue", "orange")
-
-# Plot the data points
-plot(data2$x, data2$y, col = point_colors[data2$class], pch = 19, xlab = "x",
-     ylab = "y")
 
 # Plot the decision boundary
 x1_grid <- seq(min(data2$x), max(data2$x), length.out = 100)
@@ -449,26 +411,26 @@ grid <- expand.grid(x = x1_grid, y = x2_grid)
 
 predicted_labels <- predict(svmfit, newdata = grid)
 
+# Plot the decision boundary with the data points
+# Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels],
      pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 
 # Plot the data points
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
-```
 
-If we just want to plot the decision boundary we can use the following code.
-
-```{r}
-# Plot the decision boundary
+# Plot the decision boundary with the data points
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels], pch = ".",
      cex = 3.5, xlab = "x", ylab = "y")
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
 ```
 
-We can see that the decision boundary is not very good. This is because the default values for cost and gamma are not good for this data. However hope is not lost since we can use cross-validation to find the best values for these parameters. Luckily we can do this with the svm function by setting 'cross' in the svm function to 5. This will use 5-fold cross-validation to find the best values for cost and gamma.
+We can observe that the decision boundary doesn't capture the spiraly-ness of the data very well. This is in part since we used the default $\xi$ and $\gamma$.
 
-```{r, echo=TRUE}
+### Cross Validation
+We can use cross-validation to find the best values for $\xi$ and $\gamma$. Fortunately, the `svm` function has built in cross-validation. Setting the `cross` parameter to the number of folds, in this case 5. However, the `svm` function does not *find* the best set of parameters, it only calculates statistics for a given set of parameters. The following function performs the full cross-validation for a RBF model:
+```{r, echo=TRUE, cache=TRUE}
 # First write a simple cross validation function
 cross_validate <- function(folds, costs, gammas, data, seed) {
   # Create a data frame to store the results
@@ -493,7 +455,9 @@ cross_validate <- function(folds, costs, gammas, data, seed) {
 
   return(results)
 }
+```
 
+```{r, echo=FALSE, cache=TRUE}
 # Create a simpler confusion matrix function
 simpler_cm <- function(cm.out) {
     print(cm.out[[2]])
@@ -501,7 +465,9 @@ simpler_cm <- function(cm.out) {
 }
 ```
 
-```{r}
+
+After running our function and filtering for the best 5 results, we get the following table. We can observe that a cost of 1 and a gamma of 10 are the best values for this data with an average accuracy of 74.3% on the test folds. 
+```{r, cache=TRUE}
 # Run our function
 validation_data_frame <- cross_validate(5, c(0.1, 1, 10, 100, 1000),
                                         c(0.01, 0.1, 1, 10, 100),
@@ -511,16 +477,20 @@ validation_data_frame <- cross_validate(5, c(0.1, 1, 10, 100, 1000),
 print(validation_data_frame[order(-validation_data_frame$accuracy), ][1:5, ])
 ```
 
-From these results we see that a cost of 1 and a gamma of 10 are the best values for this data with an total accuracy of 74.3% on the test folds. Now lets use these values to classify the data and plot the decision boundary.
+Now let's use these values to fit a new model. By analyzing the Confusion Matrix, we can observe that the accuracy rose all the way to 82.1% on the training set. This is a huge improvement!!!
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, cache=TRUE}
 # Use the best cost and gamma values to classify the data
 svmfit_best <- svm(class ~ ., data = data2, kernel = "radial", cost = 1,
                    gamma = 10)
 
 # Create a confusion matrix to evaluate the SVM model
 confusionMatrix(predict(svmfit_best, data2), data2$class) |> simpler_cm()
+```
 
+The decision boundary also looks way better. It isn't quite perfect, Once again the majority class becomes the background and the minority class generates weird patches. Nonetheless, the fitted decision boundary is much closer to the true decision boundary of the data than before. 
+
+```{r, echo=FALSE, fig.show="hold", out.width="50%", cache=TRUE}
 predicted_labels_best <- predict(svmfit_best, newdata = grid)
 
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".",
@@ -529,11 +499,7 @@ plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".",
 # Plot the data points
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 legend("topright", legend = levels(data2$class), col = point_colors, pch = 19)
-```
 
-Let's look at just the decision boundary.
-
-```{r, echo=FALSE}
 # Plot the decision boundary
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = ".",
      cex = 3.5, xlab = "x", ylab = "y")
@@ -541,9 +507,9 @@ legend("topright", legend = levels(data2$class), col = boundary_colors,
        pch = 19)
 ```
 
-Now this looks pretty good with a total accuracy of 82.1% on the entire training set. This is a huge improvement over the 55.1% we got with the default values. The plot also shows that the decision boundary is much better than before. It isn't quite perfect, with some gaps and strange connections occasionally, but it is much closer to the true decision boundary of how the data was classified than before.
+### Testing Dataset
 
-The final step is to see how this model performs on some test data generated the same way. We will use the same confusion matrix function as before to evaluate the model.
+The final step is to see how this model performs on some test data generated the same way. By observing the Test Confusion Matrix, we get a test accuracy of 75.6% on the test data. This is a lower than the 82.1% training accuracy. However, the test accuracy is higher than the best average cross-validated accuracy (74.3%). This shows that the model is generalizing well to new data.
 
 ```{r, echo=FALSE}
 # Create new test data
@@ -566,11 +532,10 @@ confusionMatrix(predict(svmfit_best, test_data2), test_data2$class) |>
   simpler_cm()
 ```
 
-We see we get an accuracy of 75.6% on the test data. This is a bit lower than the 82.1% we got on the training data, but it is actually better than what we got when doing cross validation on the training data likely since we trained on the full data set where in cross validation we only trained on 80% of the data. This shows that the model is generalizing well to new data.
+### Best Case Scenario
+Since this is generated data, we can also classify the data using the true decision boundary (spiral - noise) and compare the results to the ones obtained by our model. From the Confusion Matrix, we can observe that the added noise causes the best possible accuracy to be 80.7%. This implies our model is only 5.2% below the accuracy of the best model we *could* get.
 
-To see what the model accuracy would have been had the model found the true decision boundary before applying the offset we can use the following code.
-
-```{r}
+```{r, echo = F, , cache=TRUE}
 post_offset_class <- numeric(n)
 new_r <- numeric(n)
 new_theta <- numeric(n)
@@ -589,7 +554,7 @@ for (j in 1:n) {
 }
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, , cache=TRUE}
 # Add the results to the data frame
 test_data2$post_offset_class <- post_offset_class
 test_data2$new_r <- new_r
@@ -602,11 +567,9 @@ test_data2$post_offset_class <- as.factor(test_data2$post_offset_class)
 confusionMatrix(test_data2$post_offset_class, test_data2$class) |> simpler_cm()
 ```
 
-We see that due to the offset being applied to the data, even if we re applied the true decision boundary before offsetting the data we would only get an accuracy of 80.7%. This is good since that means our model is only 5.2% off a model that found the true decision boundary before the offset was applied.
+We can also overlay the plot of the fit decision boundary (lightblue-orange) and a plot for the true decision boundary (light-dark). By doing so, we can observe that the fit decision boundary estimates the true decision boundary surprisingly well.
 
-Finally lets plot the true decision boundary and the decision boundary found by the model for comparison.
-
-```{r, echo=FALSE}
+```{r, echo=FALSE, cache=TRUE, out.width="70%"}
 # Create a grid of points for prediction
 x1_grid <- seq(min(test_data2$x), max(test_data2$x), length.out = 100)
 x2_grid <- seq(min(test_data2$y), max(test_data2$y), length.out = 100)
@@ -638,29 +601,17 @@ points(grid$x, grid$y, col = boundary_colors[predicted_labels_best], pch = "x",
        cex = .85)
 ```
 
-Now that we have seen the power of the RBF kernel we can compare it to other models. We will compare it to a linear kernel, a polynomial kernel, a logistic regression model without many interactions. We will also compare it to a KNN model. 
+### Facing Other Models
 
-Lets start with a linear kernel and a polynomial kernel since those are fairly easy.
+Now that we have seen the power of the RBF kernel we can compare it to other models. We will compare it to a linear kernel SVM, a polynomial kernel SVM, a logistic regression model without many interactions. We will also compare it to a KNN model. 
 
-```{r}
-# Use a linear kernel to classify the data with the SVM function
-svmfit_linear <- svm(class ~ ., data = data2, kernel = "linear", cost = 1000)
+Lets start with a linear kernel SVM and a polynomial kernel SVM since those are part of the same family. After cross-validation (for the polynomial kernel the best degree, cost, and gamma are 5, 10 and 0.1) and testing, we obtained each models' confusion Matrix to realize they're marginally better than just randomly guessing. From the confusion matrix, we can observe that the linear kernel model is  basically guessing. This is in part since no clear line or simple curve splits the data.
 
-# Create a confusion matrix to evaluate the SVM model
-confusionMatrix(predict(svmfit_linear, data2), data2$class) |> simpler_cm()
 
-predicted_labels_linear <- predict(svmfit_linear, newdata = grid)
-
-plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".",
-     cex = 3.5, xlab = "x", ylab = "y")
-
-# Plot the data points
-points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
-```
-
-As we can see the linear kernel does not do a good job at classifying the data only getting a 51.5% accuracy (only slightly better than guessing) since no line cleanly fits the data. So lets try the polynomial kernel. I have used cross validation to find the best degree, cost, and gamma values for the polynomial kernel, but I will not run that code here since it takes a long time to run and the results are not good anyway.
-
-```{r, echo=FALSE, cache=TRUE}
+<!-- ## Cross validation for polynomial Kernel-->
+<!-- ## Showing and running this code takes up too much time and space on the document -->
+<!-- ## Not including this allows for a more seamless side-by-side polynomial and linear models -->
+```{r, echo=FALSE, cache=TRUE, eval=F}
 # Use a polynomial kernel to classify the data with the SVM function
 
 # Write a cross validation function for polynomial kernels that takes degrees, cost, and gamma into account
@@ -695,21 +646,41 @@ costs <- c(1, 10, 100)
 gammas <- c(0.1, 1, 10)
 
 # Running this code will take awhile, maybe uncomment it when knitting the pdf for the final time.
-#validation_data_frame_poly <- cross_poly(2, degrees, costs, gammas, data2, seed = 2024)
+validation_data_frame_poly <- cross_poly(2, degrees, costs, gammas, data2, seed = 2024)
 
 # Print the top 5 best degree, cost, and gamma values
-# print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy), ][1:5, ])
+print(validation_data_frame_poly[order(-validation_data_frame_poly$accuracy), ][1:5, ])
 ```
 
-From this we get that the best degree, cost, and gamma are 5, 10 and 0.1 respectively, although it does not seem like it will perform well. Let's check just to be sure.
 
-```{r}
+
+```{r, cache=TRUE, echo=FALSE}
+# Use a linear kernel to classify the data with the SVM function
+svmfit_linear <- svm(class ~ ., data = data2, kernel = "linear", cost = 1000)
+
+# Create a confusion matrix to evaluate the SVM model
+noquote("Linear SVM:")
+confusionMatrix(predict(svmfit_linear, data2), data2$class) |> simpler_cm()
+
 # Make the best poly model based on the cross validation
 svm_poly <- svm(class ~ ., data = data2, kernel = "polynomial", degree = 5,
                 cost = 10, gamma = 0.1)
 
 # Check the svm_poly model on a confusion matrix
+noquote("Polynomial SVM:")
 confusionMatrix(predict(svm_poly, data2), data2$class) |> simpler_cm()
+```
+
+Once again, the plots show that no single line or simple curve efficiently separates the data.
+
+```{r, echo=FALSE, cache=TRUE, fig.show="hold", out.width="50%"}
+predicted_labels_linear <- predict(svmfit_linear, newdata = grid)
+
+plot(grid$x, grid$y, col = boundary_colors[predicted_labels_linear], pch = ".",
+     cex = 3.5, xlab = "x", ylab = "y")
+
+# Plot the data points
+points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 
 predicted_labels_poly <- predict(svm_poly, newdata = grid)
 
@@ -719,34 +690,39 @@ plot(grid$x, grid$y, col = boundary_colors[predicted_labels_poly], pch = ".",
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
-We can see that the very best polynomial kernel from our cross validation only gets an accuracy of 51.1% which is not very good, in fact it is worse than the linear kernel or just guessing the more likely (at least based on the test data) classification every time. 
+Now let's check how a Logistic Regression model does on this data. After fitting the model, we get the following confusion Matrix. The Logistic Regression has an accuracy of 54.4%, which is better than the previous 2 SVM models, however, it is still not much better than random guessing.
 
-Now let's check how a logistic regression model does on this data.
-
-```{r}
+```{r, echo=FALSE}
 # Use a logistic regression model to classify the data
 logit_model <- glm(class ~ x + y, data = data2, family = "binomial")
 # Predict using the model
 predicted_probabilities <- predict(logit_model, type = "response")
 
+
 # Change all the Falses to 0 and Trues to 1
-predicted_probabilities <- ifelse(predicted_probabilities > 0.5, 1, 0)
+predicted_probabilities2 <- ifelse(predicted_probabilities > 0.5, 1, 0)
 
 # Create a confusion matrix to evaluate the model
-confusionMatrix(as.factor(predicted_probabilities), as.factor(data2$class)) |>
+confusionMatrix(as.factor(predicted_probabilities2), as.factor(data2$class)) |>
   simpler_cm()
+```
+If we peek at the predicted probabilities, we can observe the model is not very confident about any decisions.
+```{r, echo=FALSE}
+# peek at probabilities
+print(predicted_probabilities |> head())
+```
 
+Finally,The plot is a mess, basically the Logistic Regression model has no clue as to what's going on.
+```{r, echo=FALSE, out.width="70%"}
 # Plot the decision boundary
 predicted_labels_logit <- predicted_probabilities > 0.5
 plot(grid$x, grid$y, col = boundary_colors[predicted_labels_logit + 1],
      pch = ".", cex = 3.5, xlab = "x", ylab = "y")
 ```
 
-As we can see from the decision boundary this model isn't very good at classifying the data, only getting an accuracy of 54.4%. This is better than the linear kernel, but still not very good, and looking at the decision boundary we can clearly see that it is no where close to the true decision boundary.
+Finally let's check how a KNN model does on this data. We find that the best k value is 3. We can expect the KNN model to perform much better for weird decision boundaries, so let's calculate both confusion matrices: training and testing. We can observe that the training accuracy of 85.7% and a testing accuracy of 70.4%. While the training accuracy is greater when compared to RBF (82.1%), the training accuracy is in fact lower greater when compared to RBF (75.6%). This is an indicator that the KNN model is significantly overfit and performs worse when predicting new data than RBF in this scenario.
 
-Finally lets check how a KNN model does on this data.
-
-```{r, echo=FALSE}
+```{r, echo=FALSE, results='hide'}
 # Load the required class library
 library(class)
 
@@ -772,9 +748,7 @@ print(validation_data_frame_knn$results[
   order(-validation_data_frame_knn$results$Accuracy), ][1:5, ])
 ```
 
-We find that the best k value is 3 with an accuracy of 70.4%. I assume the k is so low because their is more correlation in the classification of the data points in certain directions at certain distances which makes the euclidean distance that KNN uses to classify (at least by default, although I won't be exploring other distance metrics in this example) not as useful, and therefore the model performs better looking at less neighbors. Now lets use this k value to classify the data and plot the decision boundary.
-
-```{r}
+```{r, echo=FALSE}
 # Use the best k value found from cross validation
 k <- 3
 
@@ -785,10 +759,17 @@ knn_model <- knn3(class ~ ., data = data2, k = k)
 ```{r, echo=FALSE}
 # Create a confusion matrix to evaluate the KNN model
 predicted_labels_knn <- predict(knn_model, newdata = data2, type = "class")
+noquote("Training KNN Confusion Matrix:")
 confusionMatrix(predicted_labels_knn, data2$class) |> simpler_cm()
+
+# Create a confusion matrix to evaluate the KNN model
+knn_model_test <- predict(knn_model, newdata = test_data2, type = "class")
+noquote("Testing KNN Confusion Matrix:")
+confusionMatrix(knn_model_test, test_data2$class) |> simpler_cm()
 ```
 
-```{r, echo=FALSE}
+While the KNN model does capture the overall spiral shape, it's not as consistant as the RBF model.
+```{r, echo=FALSE, out.width="70%"}
 # Plot the decision boundary
 predicted_labels_knn <- predict(knn_model, newdata = grid, type = "class")
 
@@ -797,17 +778,8 @@ plot(grid$x, grid$y, col = boundary_colors[predicted_labels_knn], pch = ".",
 points(data2$x, data2$y, col = point_colors[data2$class], pch = 19)
 ```
 
-This time the accuracy is quite good at 85.7% which is even better than the cross validated RBF kernel. I do think it has an unfair advantage in this category though since it can use the classification of itself as a neighbor to make a decision. This means if k = 1, the model would have 100% accuracy on the training set as it would only look at it's own classification. The decision boundary is also looks quite good although it seems to have a harder time keeping a consistent width compared to the RBF SVM model. The results from the cross validation are also not as good as the RBF kernel, so lets see how it does on the test data to make a final conclusion.
 
-
-```{r, echo=FALSE}
-# Create a confusion matrix to evaluate the KNN model
-knn_model_test <- predict(knn_model, newdata = test_data2, type = "class")
-
-confusionMatrix(knn_model_test, test_data2$class) |> simpler_cm()
-```
-
-On the test data the KNN model gets an accuracy of 72.6% which is a bit lower than the 75.6% the RBF kernel got. This is likely due to the decision boundary not being as good as the RBF kernel. It also shows the the KNN model had more variance, and less bias then the RBF SVM, since it did better on classifying the training data, but worse on classifying the testing data. I do think this is somewhat of an unfair fight though, since on the training data the KNN model can use it's very own point as a neighbor, meaning it already knows the correct classification for at least that point. When there are only 3 neighbors this can have a big impact on the classification. Overall I would say the RBF kernel is the best model for this data since it did the best at classifying the test data and had the best decision boundary. The KNN model was a close second though.
+In conclusion, the RBF model was one of the only two models capable of capturing such intricate decision boundaries. And when compared to the other alternative (KNN), RBF was far superior in this scenario.
 
 ## Real Data Set
 
@@ -815,7 +787,7 @@ Now that we have demonstrated the power of the RBF kernel on a generated data se
 
 x_1 is the proportion of dark pixels in the upper-left quadrant, x_2 is the proportion of dark pixels in the lower-right quadrant, and y is the true classification for the digit (2 or 7).
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 # Load the required libraries
 library(MASS)
 library(caret)
@@ -841,7 +813,7 @@ We can see from plotting the training data that the 2's and 7's are quite simila
 
 First let's try fitting a linear kernel to the data just to get a baseline, from here all the code will use the training data until we return to see how it does on the test data.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width="70%"}
 # Fit a linear kernel to the data
 svmfit_linear_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "linear",
                            cost = 1000)
@@ -870,7 +842,7 @@ points(mnist_27$train$x_1, mnist_27$train$x_2,
 
 We can see that our linear kernel does not quite do the job, it's accuracy of 78.88% is impressive, but not as good as we would like, but it gives us a good baseline to compare the other models to. Now let's try the RBF kernel.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width="70%"}
 # Use a radial basis function kernel to classify the data with the SVM function
 svmfit_rbf_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "radial",
                         cost = 1, gamma = 1)
@@ -892,7 +864,7 @@ points(mnist_27$train$x_1, mnist_27$train$x_2,
 
 Even with the default values of cost and gamma the RBF kernel seems to do a better job of classifying the data than the linear kernel. The accuracy of 83.38% is better than the linear kernel, but still not as good as we would like. The decision boundary also looks better than the linear kernel, seeming to follow the data better without overfitting. Now let's try to find the best values for cost and gamma using cross validation.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width="70%"}
 # Convert to a matrix with the proper column names
 training_matrix <- as.data.frame(mnist_27$train)
 colnames(training_matrix) <- c("class", "x_1", "x_2")
@@ -910,7 +882,7 @@ print(validation_data_frame_mnist[order(-validation_data_frame_mnist$accuracy),
 
 From this we see that lowering the cost down to 0.1 and keeping ht gamma at 1 seems to do the best at predicting new unseen data getting an accuracy of 83.375% on the test folds. Let's use this to train a new model and see how the decision boundary and confusion matrix change as a result.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width="70%"}
 # Use the best cost and gamma values to classify the data
 svmfit_best_mnist <- svm(y ~ ., data = mnist_27$train, kernel = "radial",
                          cost = 0.1, gamma = 1)
@@ -962,7 +934,7 @@ print(validation_data_frame_knn_mnist$
 
 From the cross validation we see that a k value of 83 is the best value for this data set with an accuracy of 83.38% on the test folds. Let's use this k value to classify the data and plot the decision boundary.
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width="70%"}
 # Use the best k value found from cross validation
 k <- 83
 
