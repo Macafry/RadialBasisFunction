@@ -671,7 +671,7 @@ degrees <- c(4, 5, 6)
 costs <- c(1, 10, 100)
 gammas <- c(0.1, 1, 10)
 
-# Running this code will take awhile, maybe uncomment it when knitting the pdf for the final time.
+# Running this takes forever so only use 2 folds :(
 validation_data_frame_poly <- cross_poly(2, degrees, costs, gammas, data2, seed = 2024)
 
 # Print the top 5 best degree, cost, and gamma values
